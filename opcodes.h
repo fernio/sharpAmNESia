@@ -1,8 +1,25 @@
 enum Opcodes6502
 {
-	ADC = ,	//Add Memory to Accumulator with Carry
-	AND = ,	//"AND" Memory with Accumulator
-	ASL = ,	//Shift Left One Bit (Memory or Accumulator)
+	ADC_IMMEDIATE		= 0x69,	//Add Memory to Accumulator with Carry
+	ADC_ZEROPAGE		= 0x65,
+	ADC_ZEROPAGE_X		= 0x75,
+	ADC_ABSOLUTE_X		= 0x7D,
+	ADC_ABSOLUTE_Y		= 0x79,
+	ADC_PREINDEXED_INDIRECT	= 0x61,
+	ADC_POSTINDEXED_INDIRECT= 0x71,
+	AND_IMMEDIATE		= 0x29,	//"AND" Memory with Accumulator
+	AND_ZEROPAGE		= 0x25,
+	AND_ZEROPAGE_X		= 0x35,
+	AND_ABSOLUTE		= 0x2D,
+	AND_ABSOLUTE_X		= 0x3D,
+	AND_ABSOLUTE_Y		= 0x39,
+	AND_PREINDEXED_INDIRECT	= 0x21,
+	AND_POSTINDEXED_INDIRECT= 0x31,
+	ASL_ACCUMULATOR		= 0x0A,	//Shift Left One Bit (Memory or Accumulator)
+	ASL_ZEROPAGE		= 0x06,
+	ASL_ZEROPAGE_X		= 0x16,
+	ASL_ABSOLUTE		= 0x0E,
+	ASL_ABSOLUTE_X		= 0x1E,
 	BCC = ,	//Branch on Carry Clear
 	BCS = ,	//Branch on Carry Set
 	BEQ = ,	//Branch on Result Zero
