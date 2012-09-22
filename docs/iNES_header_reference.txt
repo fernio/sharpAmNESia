@@ -1,0 +1,155 @@
+Taken from http://wiki.nesdev.com/w/index.php/INES
+
+[[Category:File formats]]
+'''iNES''' was an early [[NES emulator]] developed by Marat Fayzullin. Its
+most lasting contribution to the NES scene was its ROM file format and
+mapper numbering system.
+
+== iNES emulator ==
+The iNES emulator is distributed as freeware on several UNIX platforms and
+as highly crippled shareware on MS-DOS and Microsoft Windows.
+
+== .NES format ==
+The iNES format (file name suffix <code>.nes</code>) is the de facto
+standard for distribution of NES binary programs. It consists of the
+following sections, in order:
+# Header (16 bytes)
+# Trainer, if present (0 or 512 bytes)
+# PRG [[ROM]] data (16384 * ''x'' bytes)
+# CHR ROM data, if present (8192 * ''y'' bytes)
+# PlayChoice hint screen, if present (0 or 8192 bytes)
+
+The format of the header is as follows:
+* 0-3: Constant $4E $45 $53 $1A ("NES" followed by MS-DOS end-of-file)
+* 4: Size of PRG ROM in 16 KB units
+* 5: Size of CHR ROM in 8 KB units (Value 0 means the board uses CHR RAM)
+* 6: Flags 6
+* 7: Flags 7
+* 8: Size of PRG RAM in 8 KB units (Value 0 infers 8 KB for compatibility;
+* see [[PRG RAM circuit]])
+* 9: Flags 9
+* 10: Flags 10 (unofficial)
+* 11-15: Zero filled
+
+=== Flags 6 ===
+ 76543210
+ ||||||||
+ ||||+||+- 0xx0: vertical arrangement/horizontal mirroring
+ |||| ||   0xx1: horizontal arrangement/vertical mirroring
+ |||| ||   1xxx: four-screen mirroring
+ |||| |+-- 1: SRAM in CPU $6000-$7FFF, if present, is battery backed
+ |||| +--- 1: 512-byte trainer at $7000-$71FF (stored before PRG data)
+ ++++----- Lower nybble of mapper number
+Some mappers, such as [[MMC1]], [[MMC3]], and [[AxROM]], can control
+nametable [[mirroring]]. They ignore bit 0.
+On the other hand, if bit 3 is true, the cart has 4 KiB of RAM at PPU
+$2000-$2FFF, and it ignores the mapper's CIRAM A10 output (as in ''Rad Racer
+2'').
+
+Unlike the PowerPak, Famicom copiers did not implement even the most popular
+Famicom mappers.
+Instead, games for the copiers were patched to use the mappers that the
+copier supported, and some of these patches relied on extra code called a
+"trainer" that the copier loaded into PRG RAM before starting the game.
+One of these copiers was made by [[wikipedia:Front Fareast Industrial|Front
+Fareast Industrial]]; hence the nickname "FFE" for these mapper hacks. It is
+probably not worth the effort to support FFE hacks in future emulators or
+copiers because substantially all games available with an FFE hack also have
+a good dump without a trainer.
+
+=== Flags 7 ===
+ 76543210
+ ||||||||
+ |||||||+- VS Unisystem
+ ||||||+-- PlayChoice-10 (8KB of Hint Screen data stored after CHR data)
+ ||||++--- If equal to 2, flags 8-15 are in NES 2.0 format
+ ++++----- Upper nybble of mapper number
+
+The PlayChoice-10 bit is not part of the official specification, and most
+emulators simply ignore the extra 8KB of data.
+PlayChoice games are designed to look good with the RGB PPU, which handles
+color emphasis differently from a standard [[NES PPU]].
+
+Vs. games have a coin slot and different palettes.
+The detection of which palette a particular game uses is left unspecified.
+
+[[NES 2.0]] is a more recent extension to the iNES format that allows more
+flexibility in ROM and RAM size, among other things.
+
+=== Flags 9 ===
+ 76543210
+ ||||||||
+ |||||||+- TV system (0: NTSC; 1: PAL)
+ +++++++-- Reserved, set to zero
+
+Though in the official specification, very few emulators honor this bit as
+virtually no ROM images in circulation make use of it.
+
+=== Flags 10 ===
+ 76543210
+   ||  ||
+   ||  ++- TV system (0: NTSC; 2: PAL; 1/3: dual compatible)
+   |+----- SRAM in CPU $6000-$7FFF is 0: present; 1: not present
+   +------ 0: Board has no [[bus conflict]]s; 1: Board has bus conflicts
+
+This byte is not part of the official specification, and relatively few
+emulators honor it.
+
+The PRG RAM Size value (stored in byte 8) was recently added to the official
+specification; as such, virtually no ROM images in circulation make use of
+it.
+
+Older versions of the iNES emulator ignored bytes 7-15, and several ROM
+management tools wrote messages in there. Commonly, these will be filled
+with "DiskDude!", which results in 64 being added to the mapper number.
+
+A general rule of thumb: if the last 4 bytes are not all zero, and the
+header is not marked for NES 2.0 format, an emulator should either mask off
+the upper 4 bits of the mapper number or simply refuse to load the ROM.
+
+== Mapper numbers ==
+In the iNES file format, cartridge boards were divided into classes called
+"mappers" based on similar board hardware and behavior, and each mapper was
+given a number from 0 to 255.
+
+A short list of common mappers can be found below - a more complete list can
+be found [[:Category:iNES Mappers|here]].
+{|
+! Number || Boards || Primary mapper hardware
+|-
+| [[iNES Mapper 000|0]] || [[NROM]] || None
+|-
+| [[iNES Mapper 001|1]] || [[SxROM]] || [[MMC1]]
+|-
+| [[iNES Mapper 002|2]] || [[UxROM]] || [[74161|74LS161]]
+|-
+| [[iNES Mapper 003|3]] || [[CNROM]] || [[74161|74LS161]]
+|-
+| [[iNES Mapper 004|4]] || [[TxROM]], [[HKROM]] || [[MMC3]], [[MMC6]]
+|-
+| [[iNES Mapper 005|5]] || [[ExROM]] || [[MMC5]]
+|-
+| [[iNES Mapper 007|7]] || [[AxROM]] || [[74161|74LS161]]
+|-
+| [[iNES Mapper 009|9]] || [[PxROM]] || [[MMC2]]
+|-
+| [[iNES Mapper 010|10]] || [[FxROM]] || [[MMC4]]
+|-
+| [[iNES Mapper 011|11]] || [[Color Dreams]]
+|-
+| [[iNES Mapper 013|13]] || [[CPROM]] || [[74161|74LS161]]
+|-
+| [[iNES Mapper 034|34]] || [[BxROM]] ([[NINA-001]]) || [[74161|74LS161]]
+|-
+| [[iNES Mapper 066|66]] || [[GNROM]]
+|-
+| [[iNES Mapper 071|71]] || Camerica
+|-
+| [[iNES Mapper 118|118]] || [[TLSROM]] || [[MMC3]]
+|-
+| [[iNES Mapper 119|119]] || [[TQROM]] || [[MMC3]]
+|}
+
+== References ==
+* [http://nesdev.com/iNES.txt iNES format by rvu]
+* [http://nesdev.com/neshdr20.txt iNES header/format by VmprHntrD]
