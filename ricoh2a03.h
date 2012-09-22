@@ -1,6 +1,8 @@
 #ifndef RICOH2A03_H
 #define RICOH2A03_H
 
+#include <cstdlib>
+
 #define RAM_SIZE 2048
 
 enum AdressingMode
@@ -11,7 +13,7 @@ enum AdressingMode
 	ABSOLUTE,
 	ABSOLUTE_X,
 	ABSOLUTE_Y,
-	
+
 }
 
 ///@brief This is the system's CPU
@@ -28,6 +30,7 @@ private:
 	unsigned char m_y;		///< y index register
 	struct ProcessorStatusRegister
 	{
+		//TODO: damn! bit fields order is platform dependent
 		bool m_carry		: 1;
 		bool m_zero			: 1;
 		bool m_intDisabled 	: 1;
@@ -37,15 +40,17 @@ private:
 		bool m_overflow		: 1;
 		bool m_negative		: 1;
 	} m_p;
-	
+
 	void Execute(int numCycles);
 };
 
 void Ricoh2A03::Execute(int numCycles)
 {
-	switch(m_ram[m_pc])
+	switch(m_rom[m_pc])
 	{
-		case 
+		default:
+			std::cerr << "unknown opcode " << std::ios::hex << std::endl;
+			exit(EXIT_FAILURE);
 	}
 }
 
