@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "rom.h"
+#include "system.h"
 
 int main(int argc, char* argv[])
 {
@@ -9,6 +9,15 @@ int main(int argc, char* argv[])
 	if(commandLine.size() < 2)
 	{
 		std::cerr << "rom parameter missing" << std::endl;
+		return -1;
+	}
+	NesSystem nes;
+	if(nes.LoadRom(commandLine[1].c_str()))
+	{
+		nes.Run();
+	}
+	else
+	{
 		return -1;
 	}
 	return 0;
