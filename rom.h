@@ -4,15 +4,14 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <cstring>
 
-#define MAX_PRG_PAGE_SIZE 32*1024
+#define PRG_ROM_PAGE_SIZE 16*1024
 #define HEADER_SIZE 16
-#define SIGNATURE_SIZE 4
-
 
 struct NesRomHeader
 {
-	char m_signature[SIGNATURE_SIZE];
+	char m_signature[4];
 	unsigned char m_numPrgRomPages;
 	unsigned char m_numChrRomPages;
 	unsigned char m_flags6;			//name chosen to match documentation used
@@ -20,16 +19,28 @@ struct NesRomHeader
 	unsigned char m_numPrgRamPages;
 	unsigned char m_flags9;			//name chosen to match documentation used
 	unsigned char m_flags10;		//name chosen to match documentation used
-	char m_unused[5];
+	char m_unused[5];				//header has to be 16 bytes long
 };
 
 class NesRom
 {
 public:
+	NesRom();
+	const unsigned char* GetDataPtr();
 	bool Load(const char* romFilename);
-	
-	unsigned char m_data[MAX_ROM_SIZE];
+
+private:	
+	char m_data[2*PRG_ROM_PAGE_SIZE];
 };
+
+NesRom::NesRom() : m_data()
+{
+}
+
+const unsigned char* NesRom::GetDataPtr()
+{
+	return reinterpret_cast<unsigned char*>(m_data);
+}
 
 bool NesRom::Load(const char* romFilename)
 {
@@ -48,10 +59,10 @@ bool NesRom::Load(const char* romFilename)
 		return false;
 	}
 	//check header signature
-	static char signature[SIGNATURE_SIZE] = { 'N', 'E', 'S', 0x1A };
-	if(memcmp(header.m_signature, signature, SIGNATURE_SIZE) != 0)
+	static char signature[] = { 'N', 'E', 'S', 0x1A };
+	if(memcmp(header.m_signature, signature, sizeof(signature)) != 0)
 	{
-		std::string headerSignature(header.m_signature, SIGNATURE_SIZE);
+		std::string headerSignature(header.m_signature, sizeof(header.m_signature));
 		std::cerr << "wrong signature in header: " << headerSignature << std::endl;
 		return false;
 	}
@@ -67,7 +78,20 @@ bool NesRom::Load(const char* romFilename)
 		}
 	}
 	//read prg rom
-	
+	switch(header.m_numPrgRomPages)
+	{
+		case 1:
+			//rom goes into upper half of address space
+			romFile.read(m_data+PRG_ROM_PAGE_SIZE, PRG_ROM_PAGE_SIZE);
+			break;
+		case 2:
+			romFile.read(m_data, 2*PRG_ROM_PAGE_SIZE);
+			break;
+		default:
+			std::cerr << "TODO: cannot handle more than 2 PRG ROM pages" << std::endl;
+			return false;
+	}
+	return true;
 }
 
 #endif	//ROM_H
