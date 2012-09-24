@@ -91,6 +91,8 @@ bool NesRom::Load(const char* romFilename)
 			std::cerr << "TODO: cannot handle more than 2 PRG ROM pages" << std::endl;
 			return false;
 	}
+	std::cout << "info: read " << static_cast<unsigned>(header.m_numPrgRomPages)
+		<< " pages of PRG ROM" << std::endl;
 	return true;
 }
 
