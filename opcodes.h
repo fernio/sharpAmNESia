@@ -150,5 +150,5 @@ enum Opcodes6502
 	TXA 					= 0x8A,	//Transfer Index X to Accumulator
 	TXS 					= 0x9A,	//Transfer Index X to Stack Pointer
 	TYA 					= 0x98,	//Transfer Index Y to Accumulator
-}
+};
 
