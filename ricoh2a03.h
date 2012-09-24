@@ -2,6 +2,7 @@
 #define RICOH2A03_H
 
 #include <cstdlib>
+#include "opcodes.h"
 
 #define RAM_SIZE 2048
 #define ROM_BASE_ADDRESS 0x8000
@@ -20,7 +21,8 @@ enum AdressingMode
 class Ricoh2A03
 {
 public:
-	void Execute(int numCycles);
+	int Execute(int numCycles);
+	void Reset();
 	void SetRomPtr(const unsigned char* rom);
 
 private:
@@ -47,18 +49,35 @@ private:
 	} m_p;
 };
 
-void Ricoh2A03::Execute(int numCycles)
+int Ricoh2A03::Execute(int numCycles)
 {
-	switch(ReadMem(m_pc))
+	while(numCycles > 0)
 	{
-		default:
-			std::cerr << "unknown opcode " << std::ios::hex << std::endl;
-			exit(EXIT_FAILURE);
+		switch(ReadMem(m_pc))
+		{
+			case CLD:
+				m_p.m_decimal = false;
+				m_pc += 1;
+				numCycles -= 2;
+				break;
+			case SEI:
+				m_p.m_intDisabled = true;
+				m_pc += 1;
+				numCycles -= 2;
+				break;
+			default:
+				std::cerr << "unknown opcode " << std::showbase << std::hex
+					<< static_cast<unsigned>(ReadMem(m_pc)) << std::endl;
+				exit(EXIT_FAILURE);
+		}
 	}
+	return numCycles;
 }
 
 unsigned char Ricoh2A03::ReadMem(unsigned short address)
 {
+	std::cout << "info: ReadMem at address " << std::showbase << std::hex
+		<< address << std::endl;
 	if(address < 0x2000)
 	{
 		//RAM read, wrap around to simulate mirroring
@@ -69,6 +88,12 @@ unsigned char Ricoh2A03::ReadMem(unsigned short address)
 		//ROM read
 		return m_rom[address - ROM_BASE_ADDRESS];
 	}
+}
+
+void Ricoh2A03::Reset()
+{
+	m_p.m_intDisabled = true;
+	m_pc = ReadMem(0xFFFC) + (ReadMem(0xFFFD)<<8);
 }
 
 void Ricoh2A03::SetRomPtr(const unsigned char* rom)
