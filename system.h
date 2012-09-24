@@ -13,10 +13,11 @@ public:
 
 private:
 	Ricoh2A03 m_cpu;
-	NesRom m_rom;	
+	NesRom m_rom;
+	bool m_poweredOn;
 };
 
-NesSystem::NesSystem()
+NesSystem::NesSystem() : m_poweredOn(false)
 {
 	m_cpu.SetRomPtr(m_rom.GetDataPtr());
 }
@@ -28,6 +29,11 @@ bool NesSystem::LoadRom(const char* filename)
 
 void NesSystem::Run()
 {
+	if(!m_poweredOn)
+	{
+		m_cpu.Reset();
+		m_poweredOn = true;
+	}
 	m_cpu.Execute(1000);
 	std::cout << "finished running" << std::endl;
 }
