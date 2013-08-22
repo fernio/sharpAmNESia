@@ -92,7 +92,7 @@ bool NesRom::Load(const char* romFilename)
 			return false;
 	}
 	std::cout << "info: read " << static_cast<unsigned>(header.m_numPrgRomPages)
-		<< " pages of PRG ROM" << std::endl;
+		<< " page" << (header.m_numPrgRomPages > 1 ? "s" : "") << " of PRG ROM" << std::endl;
 	return true;
 }
 
