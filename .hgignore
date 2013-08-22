@@ -1,6 +1,9 @@
+~$
 syntax: glob
-makefile~
-amnesia
-*.nes
+build/CMakeFiles
+build/CMakeCache.txt
+build/cmake_install.cmake
+build/Makefile
+build/amNESia
 *.cpp~
 *.h~
