@@ -1,7 +1,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "ricoh2a03.h"
+#include "nescpu.h"
 #include "rom.h"
 
 class NesSystem
@@ -12,7 +12,7 @@ public:
 	void Run();
 
 private:
-	Ricoh2A03 m_cpu;
+	NESCPU m_cpu;
 	NesRom m_rom;
 	bool m_poweredOn;
 };
