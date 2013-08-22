@@ -1,0 +1,5 @@
+On Linux, you have to have CMake installed. Just open a terminal and type
+
+cmake ..
+
+on the "build" folder of the project.
