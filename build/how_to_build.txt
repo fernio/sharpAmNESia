@@ -2,4 +2,14 @@ On Linux, you have to have CMake installed. Just open a terminal and type
 
 cmake ..
 
-on the "build" folder of the project.
+on the "build" folder of the project. After that, just type
+
+make
+
+to compile the emulator and all the tests. To run these tests, type
+
+ctest
+
+or, if you want to see the output of failing tests, type
+
+ctest --output-on-failure

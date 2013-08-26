@@ -1,4 +1,9 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 project(amNESia)
 include_directories(include)
-add_executable(amNESia src/amnesia.cpp)
+file(GLOB AMNESIA_SOURCES src/*)
+add_executable(amNESia ${AMNESIA_SOURCES})
+
+enable_testing()
+add_executable(opcodesInfoTest tests/opcodesInfoTest.cpp)
+add_test(opcodesInfoTest opcodesInfoTest)

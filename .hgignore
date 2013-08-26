@@ -1,9 +1,10 @@
 ~$
 syntax: glob
 build/CMakeFiles
+build/Testing
 build/CMakeCache.txt
 build/cmake_install.cmake
 build/Makefile
+build/CTestTestfile.cmake
 build/amNESia
-*.cpp~
-*.h~
+build/opcodesInfoTest
