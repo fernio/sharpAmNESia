@@ -6,5 +6,5 @@ build/CMakeCache.txt
 build/cmake_install.cmake
 build/Makefile
 build/CTestTestfile.cmake
-build/amNESia
-build/opcodesInfoTest
+build/amNESia*
+build/opcodesInfoTest*
