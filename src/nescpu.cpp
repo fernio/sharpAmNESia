@@ -1,7 +1,8 @@
 #include <iomanip>
 #include <iostream>
-#include "nescpu.h"
-#include "opcodesInfo.h"	
+#include "nescpu.hh"
+#include "opcodes.hh"
+#include "opcodesInfo.hh"	
 
 int NESCPU::Execute(int numCycles)
 {

@@ -6,7 +6,6 @@
 
 #include <cstdlib>
 #include <bitset>
-#include "opcodes.h"
 
 #define RAM_SIZE 2048
 #define ROM_BASE_ADDRESS 0x8000

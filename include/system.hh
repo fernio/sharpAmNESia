@@ -1,8 +1,8 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "nescpu.h"
-#include "rom.h"
+#include "nescpu.hh"
+#include "rom.hh"
 
 class NesSystem
 {

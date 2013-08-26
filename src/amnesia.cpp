@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "system.h"
+#include "system.hh"
 
 int main(int argc, char* argv[])
 {
