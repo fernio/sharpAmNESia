@@ -41,6 +41,7 @@ public:
 	///@returns Actual number of executed cycles (might differ from numCycles)
 	int Execute(int numCycles);
 	
+	void PowerUp();
 	void Reset();
 	void SetRomPtr(const unsigned char* rom);
 

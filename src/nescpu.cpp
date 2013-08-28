@@ -73,6 +73,16 @@ unsigned char NESCPU::ReadMem(unsigned short address)
 	}
 }
 
+void NESCPU::PowerUp()
+{
+	m_sp = 0xFD;
+	m_a = 0;
+	m_x = 0;
+	m_y = 0;
+	m_p = 0x34;
+	m_pc = 0;	//TODO double check
+}
+
 void NESCPU::Reset()
 {
 	m_p[INTERRUPT_DISABLE] = 1;
