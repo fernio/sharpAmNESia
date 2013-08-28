@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(amNESia)
+## Compiler flags
+if(CMAKE_COMPILER_IS_GNUCXX)
+	# enable c++11 features
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
 include_directories(include)
 # all files located in the source folder will be part of the amNESia executable
 file(GLOB AMNESIA_SOURCES src/*)
