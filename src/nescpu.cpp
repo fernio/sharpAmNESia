@@ -9,7 +9,7 @@ int NESCPU::Execute(int numCycles)
 	int executedCycles = 0;
 	while(executedCycles < numCycles)
 	{
-#ifdef LOG_EXECUTION
+#ifdef UNIT_TESTING
 		std::cout << std::hex << static_cast<unsigned>(m_pc) << "  "
 				<< static_cast<unsigned>(ReadMem(m_pc)) << " ";
 		int startingCycles = executedCycles;
@@ -35,7 +35,7 @@ int NESCPU::Execute(int numCycles)
 					<< static_cast<unsigned>(ReadMem(m_pc)) << std::endl;
 				exit(EXIT_FAILURE);
 		}
-#ifdef LOG_EXECUTION
+#ifdef UNIT_TESTING
 		DumpRegisters();
 		std::cout << std::dec << " CYC:" << startingCycles
 				<< " SL:" << 0 //TODO: is it scanlines?
