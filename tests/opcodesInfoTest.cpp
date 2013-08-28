@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include "opcodesInfo.hh"
+#include "opcodesInfo.hpp"
 
 #define EXPECTED_ENTRIES 256
 #define EXPECTED_VALID_ENTRIES 150	//TODO: double check this number
