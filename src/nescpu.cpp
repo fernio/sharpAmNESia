@@ -75,19 +75,21 @@ unsigned char NESCPU::ReadMem(unsigned short address)
 
 void NESCPU::PowerUp()
 {
+	//first call Reset, to set the value of the PC, then set the rest of the registers
+	Reset();
+	m_p = 0x34;
 	m_sp = 0xFD;
 	m_a = 0;
 	m_x = 0;
 	m_y = 0;
-	m_p = 0x34;
-	m_pc = 0;	//TODO double check
 }
 
 void NESCPU::Reset()
 {
 	m_p[INTERRUPT_DISABLE] = 1;
 	m_pc = ReadMem(0xFFFC) + (ReadMem(0xFFFD)<<8);
-	m_sp = 0xFD;
+	//as seen on NesDev Wiki
+	m_sp -= 3;
 }
 
 void NESCPU::SetRomPtr(const unsigned char* rom)
