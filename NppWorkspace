@@ -1,0 +1,23 @@
+<NotepadPlus>
+    <Project name="amNESia">
+        <Folder name="include">
+            <File name="include\nescpu.hpp" />
+            <File name="include\system.hpp" />
+            <File name="include\rom.hpp" />
+            <File name="include\ricoh2c02.hpp" />
+            <File name="include\opcodesInfo.hpp" />
+            <File name="include\opcodes.hpp" />
+        </Folder>
+        <Folder name="src">
+            <File name="src\amnesia.cpp" />
+            <File name="src\nescpu.cpp" />
+        </Folder>
+        <Folder name="tests">
+            <File name="tests\CMakeLists.txt" />
+            <File name="tests\cpuTest.cpp" />
+            <File name="tests\nestest.log" />
+            <File name="tests\opcodesInfoTest.cpp" />
+        </Folder>
+        <File name="CMakeLists.txt" />
+    </Project>
+</NotepadPlus>
