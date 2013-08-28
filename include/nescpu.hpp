@@ -34,6 +34,8 @@ enum StatusFlags
 class NESCPU
 {
 public:
+	NESCPU();
+
 	///@brief
 	///@param numCycles Number of cycles to execute before returning.
 	///@returns Actual number of executed cycles (might differ from numCycles)

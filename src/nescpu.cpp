@@ -4,6 +4,10 @@
 #include "opcodes.hpp"
 #include "opcodesInfo.hpp"	
 
+NESCPU::NESCPU() : m_rom(nullptr)
+{
+}
+
 int NESCPU::Execute(int numCycles)
 {
 	int executedCycles = 0;
