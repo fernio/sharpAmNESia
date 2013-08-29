@@ -4,6 +4,8 @@
 #include "opcodes.hpp"
 #include "opcodesInfo.hpp"	
 
+#define ROM_BASE_ADDRESS 0x8000
+
 NESCPU::NESCPU() : m_rom(nullptr)
 {
 }
@@ -13,32 +15,38 @@ int NESCPU::Execute(int numCycles)
 	int executedCycles = 0;
 	while(executedCycles < numCycles)
 	{
+		unsigned opcode = ReadMem(m_pc);
 #ifdef UNIT_TESTING
-		std::cout << std::hex << static_cast<unsigned>(m_pc) << "  "
-				<< static_cast<unsigned>(ReadMem(m_pc)) << " ";
+		std::cout << std::hex << std::uppercase << m_pc << "  ";
+		for(int i = 0; i < s_opcodesInfo[opcode].m_numBytes; ++i)
+		{
+			std::cout << static_cast<unsigned>(ReadMem(m_pc+i)) << " ";
+		}
+		std::cout << " " << s_opcodesInfo[opcode].m_mnemonic << " ";
 		int startingCycles = executedCycles;
 #endif 
-		switch(ReadMem(m_pc))
+		switch(opcode)
 		{
-			case CLD:
-				m_p[DECIMAL_MODE] = 0;
-				m_pc += 1;
-				executedCycles += 2;
-				break;
+			// case CLD:
+				// m_p[DECIMAL_MODE] = 0;
+				// m_pc += s_opcodesInfo[opcode].m_numBytes;
+				// break;
 			case JMP_ABSOLUTE:
 				m_pc = ReadMem(m_pc+1) + (ReadMem(m_pc+2) << 8);
-				executedCycles += 3;
+#ifdef UNIT_TESTING
+				std::cout << "$" << static_cast<unsigned>(m_pc) << " ";
+#endif
 				break;
-			case SEI:
-				m_p[INTERRUPT_DISABLE] = 1;
-				m_pc += 1;
-				executedCycles += 2;
-				break;
+			// case SEI:
+				// m_p[INTERRUPT_DISABLE] = 1;
+				// m_pc += s_opcodesInfo[opcode].m_numBytes;
+				// break;
 			default:
 				std::cerr << "unknown opcode " << std::showbase << std::hex
 					<< static_cast<unsigned>(ReadMem(m_pc)) << std::endl;
 				exit(EXIT_FAILURE);
 		}
+		executedCycles += s_opcodesInfo[opcode].m_numCycles;
 #ifdef UNIT_TESTING
 		DumpRegisters();
 		std::cout << std::dec << " CYC:" << startingCycles

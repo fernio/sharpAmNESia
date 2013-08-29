@@ -8,7 +8,6 @@
 #include <bitset>
 
 #define RAM_SIZE 2048
-#define ROM_BASE_ADDRESS 0x8000
 
 enum AdressingMode
 {
@@ -45,7 +44,12 @@ public:
 	void Reset();
 	void SetRomPtr(const unsigned char* rom);
 
+#ifdef UNIT_TESTING
+//allow unit tests to modify internal state of class
+public:
+#else
 private:
+#endif
 	void DumpRegisters();
 	unsigned char ReadMem(unsigned short address);
 
