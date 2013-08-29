@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
 	NESCPU cpu;
 	cpu.SetRomPtr(rom.GetDataPtr());
 	cpu.PowerUp();
+	//execution has to be set to start at 0xC000 according to NesDev wiki
 	cpu.m_pc = 0xC000;
 	cpu.Execute(100);
 	return 0;
