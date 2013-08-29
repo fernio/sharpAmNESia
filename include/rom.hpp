@@ -45,7 +45,7 @@ const unsigned char* NesRom::GetDataPtr()
 bool NesRom::Load(const char* romFilename)
 {
 	std::ifstream romFile(romFilename, std::ifstream::binary);
-	if(!romFile)
+	if(!romFile || !romFile.good())
 	{
 		std::cerr << "error opening rom, filename: " << romFilename << std::endl;
 		return false;
