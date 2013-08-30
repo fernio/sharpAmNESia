@@ -3,7 +3,7 @@ project(amNESia)
 ## Compiler flags
 if(CMAKE_COMPILER_IS_GNUCXX)
 	# enable c++11 features
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 endif()
 
 include_directories(include)
