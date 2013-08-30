@@ -50,7 +50,8 @@ public:
 #else
 private:
 #endif
-	void DumpRegisters();
+	std::string DumpRegisters();
+	void PrintBytes(std::ostream& stream, unsigned data, unsigned dataWidth);
 	unsigned char ReadMem(unsigned short address);
 
 	unsigned char m_ram[RAM_SIZE];

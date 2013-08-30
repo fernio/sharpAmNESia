@@ -1,10 +1,12 @@
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include "nescpu.hpp"
 #include "opcodes.hpp"
 #include "opcodesInfo.hpp"	
 
 #define ROM_BASE_ADDRESS 0x8000
+#define PIXELS_PER_CYCLE 3		//only on NTSC
 
 NESCPU::NESCPU() : m_rom(nullptr)
 {
@@ -17,13 +19,25 @@ int NESCPU::Execute(int numCycles)
 	{
 		unsigned opcode = ReadMem(m_pc);
 #ifdef UNIT_TESTING
-		std::cout << std::hex << std::uppercase << m_pc << "  ";
-		for(int i = 0; i < s_opcodesInfo[opcode].m_numBytes; ++i)
-		{
-			std::cout << static_cast<unsigned>(ReadMem(m_pc+i)) << " ";
-		}
-		std::cout << " " << s_opcodesInfo[opcode].m_mnemonic << " ";
+		static std::ostringstream temp;
 		int startingCycles = executedCycles;
+		const std::string regs(DumpRegisters());
+		//program counter
+		PrintBytes(std::cout, m_pc, 4);
+		std::cout << "  ";
+		//bytes read
+		temp.str("");
+		for(unsigned i = 0; i < s_opcodesInfo[opcode].m_numBytes; ++i)
+		{
+			PrintBytes(temp, static_cast<unsigned>(ReadMem(m_pc+i)), 2);
+			temp << " ";
+		}
+		std::cout << std::setw(10) << temp.str();
+		//instruction
+		std::cout << s_opcodesInfo[opcode].m_mnemonic << " ";
+		//prepare for outputting instruction argument
+		temp.str("");
+		std::cout << std::setw(28) << std::left;
 #endif 
 		switch(opcode)
 		{
@@ -34,7 +48,20 @@ int NESCPU::Execute(int numCycles)
 			case JMP_ABSOLUTE:
 				m_pc = ReadMem(m_pc+1) + (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
-				std::cout << "$" << static_cast<unsigned>(m_pc) << " ";
+				temp << "$";
+				PrintBytes(temp, m_pc, 4);
+				std::cout << temp.str();
+#endif
+				break;
+			case LDX_IMMEDIATE:
+				m_x = ReadMem(m_pc+1);
+				m_p[NEGATIVE] = m_x < 0;
+				m_p[ZERO] = m_x == 0;
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+#ifdef UNIT_TESTING
+				temp << "#$";
+				PrintBytes(temp, static_cast<unsigned>(m_x), 2);
+				std::cout << temp.str();
 #endif
 				break;
 			// case SEI:
@@ -48,8 +75,8 @@ int NESCPU::Execute(int numCycles)
 		}
 		executedCycles += s_opcodesInfo[opcode].m_numCycles;
 #ifdef UNIT_TESTING
-		DumpRegisters();
-		std::cout << std::dec << " CYC:" << startingCycles
+		
+		std::cout << regs << std::dec << " CYC:" << startingCycles*PIXELS_PER_CYCLE
 				<< " SL:" << 0 //TODO: is it scanlines?
 				<< std::endl;
 #endif
@@ -57,14 +84,21 @@ int NESCPU::Execute(int numCycles)
 	return executedCycles;
 }
 
-void NESCPU::DumpRegisters()
+std::string NESCPU::DumpRegisters()
 {
-	std::cout << std::hex << std::setw(2)
-			<< "A:" << static_cast<unsigned>(m_a)
-			<< " X:" << static_cast<unsigned>(m_x)
-			<< " Y:" << static_cast<unsigned>(m_y)
-			<< " P:" << m_p.to_ulong()
-			<< " SP:" << static_cast<unsigned>(m_sp);
+	static std::ostringstream temp;
+	temp.str("");
+	temp << "A:";
+	PrintBytes(temp, static_cast<unsigned>(m_a), 2);
+	temp << " X:";
+	PrintBytes(temp, static_cast<unsigned>(m_x), 2);
+	temp << " Y:";
+	PrintBytes(temp, static_cast<unsigned>(m_y), 2);
+	temp << " P:";
+	PrintBytes(temp, m_p.to_ulong(), 2);
+	temp << " SP:";
+	PrintBytes(temp, static_cast<unsigned>(m_sp), 2);
+	return temp.str();
 }
 
 unsigned char NESCPU::ReadMem(unsigned short address)
@@ -79,17 +113,25 @@ unsigned char NESCPU::ReadMem(unsigned short address)
 		//ROM read
 		return m_rom[address - ROM_BASE_ADDRESS];
 	}
+	//TODO complete other adress ranges
+	return 0;
 }
 
 void NESCPU::PowerUp()
 {
 	//first call Reset, to set the value of the PC, then set the rest of the registers
 	Reset();
-	m_p = 0x34;
+	m_p = 0x24;
 	m_sp = 0xFD;
 	m_a = 0;
 	m_x = 0;
 	m_y = 0;
+}
+
+void NESCPU::PrintBytes(std::ostream& stream, unsigned bytes, unsigned dataWidth)
+{
+	stream << std::hex << std::uppercase << std::setw(dataWidth) << std::left << std::setfill('0')
+		<< bytes << std::setfill(' ');
 }
 
 void NESCPU::Reset()
