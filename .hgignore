@@ -1,12 +1,4 @@
 ~$
 \.orig$
 syntax: glob
-build/CMakeFiles
-build/Testing
-build/tests
-build/CMakeCache.txt
-build/cmake_install.cmake
-build/Makefile
-build/CTestTestfile.cmake
-build/amNESia*
-build/opcodesInfoTest*
+build/
