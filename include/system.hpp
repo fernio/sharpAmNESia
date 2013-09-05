@@ -35,7 +35,7 @@ void NesSystem::Run()
 		m_poweredOn = true;
 	}
 	m_cpu.Execute(1000);
-	std::cout << "finished running" << std::endl;
+	std::cout << "finished running\n";
 }
 
 #endif	//SYSTEM_H
