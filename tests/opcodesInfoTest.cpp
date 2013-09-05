@@ -16,10 +16,10 @@ int main()
 	}
 	//check that the right number of entries are valid
 	int numValidEntries = 0;
-	std::string invalidEntry(INVALID_OPCODE_MNEMONIC);
+	std::string invalidOpcode(INVALID_OPCODE_MNEMONIC);
 	for(int i = 0; i < numEntries; ++i)
 	{
-		if(invalidEntry != s_opcodesInfo[i].m_mnemonic)
+		if(invalidOpcode != s_opcodesInfo[i].m_mnemonic && s_opcodesInfo[i].m_numCycles > 1)
 		{
 			++numValidEntries;
 		}
