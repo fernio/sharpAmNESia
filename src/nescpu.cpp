@@ -40,32 +40,38 @@ int NESCPU::Execute(int numCycles)
 #endif 
 		switch(opcode)
 		{
+			case BCC:
+				executedCycles += BranchOnCondition(m_p[CARRY] == 0, opcode);
+				break;
 			case BCS:
-				if(m_p[CARRY])
+				executedCycles += BranchOnCondition(m_p[CARRY] == 1, opcode);
+				break;
+			case BEQ:
+				executedCycles += BranchOnCondition(m_p[ZERO] == 1, opcode);
+				break;
+			case BIT_ZEROPAGE:
 				{
-					//branch
-					if((m_pc & 0xFF) + ReadMem(m_pc+1) > 0xFF)
-					{
-						//branch to next page
-						executedCycles += 2;
-					}
-					else
-					{
-						//branch on same page
-						++executedCycles;
-					}
-					m_pc += ReadMem(m_pc+1);
-					m_pc += s_opcodesInfo[opcode].m_numBytes;
-				}
-				else
-				{
-					//no branch
-					m_pc += s_opcodesInfo[opcode].m_numBytes;
-				}
+					unsigned arg = ReadMem(m_pc+1);
 #ifdef UNIT_TESTING
-				temp << "$" << setdataprint(4) << m_pc;
-				std::cout << temp.str();
+					temp << "$" << setdataprint(2) << arg << " = " << setdataprint(2) << ReadMem(arg);
+					std::cout << temp.str();
 #endif
+					unsigned data = ReadMem(arg);
+					m_p[ZERO] = (data & m_a) == 0;
+					m_p[NEGATIVE] = (data >> 7) & 1;
+					m_p[OVERFLOW] = (data >> 6) & 1;
+					m_pc += s_opcodesInfo[opcode].m_numBytes;
+				}
+				break;
+			case BNE:
+				executedCycles += BranchOnCondition(m_p[ZERO] == 0, opcode);
+				break;
+			case CLC:
+#ifdef UNIT_TESTING
+				std::cout << "";
+#endif
+				m_p[CARRY] = 0;
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			// case CLD:
 				// m_p[DECIMAL_MODE] = 0;
@@ -86,28 +92,43 @@ int NESCPU::Execute(int numCycles)
 				std::cout << temp.str();
 #endif
 				break;
-			case LDX_IMMEDIATE:
-				m_x = ReadMem(m_pc+1);
-				m_p[NEGATIVE] = m_x < 0;
-				m_p[ZERO] = m_x == 0;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
+			case LDA_IMMEDIATE:
 #ifdef UNIT_TESTING
-				temp << "#$" << setdataprint(2) << m_x;
+				temp << "#$" << setdataprint(2) << ReadMem(m_pc+1);
 				std::cout << temp.str();
 #endif
+				LoadRegister(m_a, m_pc+1, opcode);
+				break;
+			case LDX_IMMEDIATE:
+#ifdef UNIT_TESTING
+				temp << "#$" << setdataprint(2) << ReadMem(m_pc+1);
+				std::cout << temp.str();
+#endif
+				LoadRegister(m_x, m_pc+1, opcode);
 				break;
 			case NOP:
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 #ifdef UNIT_TESTING
 				std::cout << " ";
 #endif
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SEC:
-				m_p[CARRY] = true;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 #ifdef UNIT_TESTING
 				std::cout << " ";
 #endif
+				m_p[CARRY] = true;
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
+			case STA_ZEROPAGE:
+#ifdef UNIT_TESTING
+				{
+					unsigned arg = ReadMem(m_pc+1);
+					temp << "$" << setdataprint(2) << arg << " = " << setdataprint(2) << ReadMem(arg);
+					std::cout << temp.str();
+				}
+#endif
+				WriteMem(ReadMem(m_pc+1), m_a);
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case STX_ZEROPAGE:
 #ifdef UNIT_TESTING
@@ -125,18 +146,49 @@ int NESCPU::Execute(int numCycles)
 				// m_pc += s_opcodesInfo[opcode].m_numBytes;
 				// break;
 			default:
+#ifdef UNIT_TESTING
+				std::cout << "";
+				numCycles = 0;
+#else
 				std::cerr << "unknown opcode " << std::showbase << std::hex
 					<< opcode << std::endl;
 				exit(EXIT_FAILURE);
+#endif
 		}
 		executedCycles += s_opcodesInfo[opcode].m_numCycles;
-#ifdef UNIT_TESTING
-		
+#ifdef UNIT_TESTING		
 		std::cout << regs << std::dec << " CYC:" << startingCycles*PIXELS_PER_CYCLE
 				<< " SL:" << 0 //TODO: scanline counter
 				<< "\n";
 #endif
 	}
+	return executedCycles;
+}
+
+unsigned NESCPU::BranchOnCondition(bool conditionResult, unsigned opcode)
+{
+#ifdef UNIT_TESTING
+	std::ostringstream temp("");
+	temp << "$" << setdataprint(4) << m_pc + ReadMem(m_pc+1) + s_opcodesInfo[opcode].m_numBytes;
+	std::cout << temp.str();
+#endif
+	unsigned executedCycles = 0;
+	if(conditionResult)
+	{
+		//branch taken
+		if((m_pc & 0xFF) + ReadMem(m_pc+1) > 0xFF)
+		{
+			//branch to next page, add 2 cycles to base count
+			executedCycles += 2;
+		}
+		else
+		{
+			//branch on same page, add 1 cycle to base count
+			++executedCycles;
+		}
+		m_pc += ReadMem(m_pc+1);
+	}
+	m_pc += s_opcodesInfo[opcode].m_numBytes;
 	return executedCycles;
 }
 
@@ -150,6 +202,14 @@ std::string NESCPU::DumpRegisters()
 		<< " P:" << setdataprint(2) << m_p.to_ulong()
 		<< " SP:" << setdataprint(2) << m_sp;
 	return temp.str();
+}
+
+void NESCPU::LoadRegister(unsigned& reg, unsigned address, unsigned opcode)
+{
+	reg = ReadMem(address);
+	m_p[NEGATIVE] = reg > 0x7F;
+	m_p[ZERO] = reg == 0;
+	m_pc += s_opcodesInfo[opcode].m_numBytes;	
 }
 
 unsigned NESCPU::ReadMem(unsigned address)
@@ -189,7 +249,7 @@ void NESCPU::PushWord(unsigned data)
 {
 	//push high byte first, then low byte
 	PushByte((data >> 8) & 0xFF);
-	PushByte(data & 0xFF);	
+	PushByte(data & 0xFF);
 }
 
 void NESCPU::Reset()

@@ -8,7 +8,7 @@
 #include <bitset>
 
 #define RAM_SIZE 2048
-
+/*
 enum AdressingMode
 {
 	IMMEDIATE,
@@ -18,7 +18,7 @@ enum AdressingMode
 	ABSOLUTE_X,
 	ABSOLUTE_Y
 };
-
+*/
 enum StatusFlags
 {
 	CARRY = 0,
@@ -66,6 +66,11 @@ private:
 	std::bitset<8> m_p;	///< processor status register
 	
 	//opcode emulation
+	///@brief
+	///@param conditionResult Result of condition tested by emulated kind of branch
+	///@returns Number of extra cycles run due to branching
+	unsigned BranchOnCondition(bool conditionResult, unsigned opcode);
+	void LoadRegister(unsigned& reg, unsigned address, unsigned opcode);
 	//void Jump(
 };
 
