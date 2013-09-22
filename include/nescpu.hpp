@@ -51,19 +51,18 @@ public:
 private:
 #endif
 	std::string DumpRegisters();
-	void PrintBytes(std::ostream& stream, unsigned data, unsigned dataWidth);
-	void Push(uint8_t data);
-	void Push(uint16_t data);
-	uint8_t ReadMem(uint16_t address);
-	void WriteMem(uint16_t address, uint8_t data);
+	void PushByte(unsigned data);
+	void PushWord(unsigned data);
+	unsigned ReadMem(unsigned address);
+	void WriteMem(unsigned address, unsigned data);
 
 	uint8_t m_ram[RAM_SIZE];
 	const uint8_t* m_rom;
-	uint16_t m_pc;		///< program counter register
-	uint8_t m_sp;		///< stack pointer register
-	uint8_t m_a;		///< accumulator register
-	uint8_t m_x;		///< x index register
-	uint8_t m_y;		///< y index register
+	unsigned m_pc;		///< program counter register
+	unsigned m_sp;		///< stack pointer register
+	unsigned m_a;		///< accumulator register
+	unsigned m_x;		///< x index register
+	unsigned m_y;		///< y index register
 	std::bitset<8> m_p;	///< processor status register
 	
 	//opcode emulation

@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include "logHelper.hpp"
 #include "nescpu.hpp"
 #include "opcodes.hpp"
 #include "opcodesInfo.hpp"	
@@ -19,20 +20,18 @@ int NESCPU::Execute(int numCycles)
 	{
 		unsigned opcode = ReadMem(m_pc);
 #ifdef UNIT_TESTING
-		static std::ostringstream temp;
 		int startingCycles = executedCycles;
 		const std::string regs(DumpRegisters());
 		//program counter
-		PrintBytes(std::cout, m_pc, 4);
-		std::cout << "  ";
+		std::cout << setdataprint(4) << m_pc << "  ";
 		//bytes read
+		static std::ostringstream temp;
 		temp.str("");
 		for(unsigned i = 0; i < s_opcodesInfo[opcode].m_numBytes; ++i)
 		{
-			PrintBytes(temp, ReadMem(m_pc+i), 2);
-			temp << " ";
+			temp << setdataprint(2) << ReadMem(m_pc+i) << " ";
 		}
-		std::cout << std::setw(10) << std::left << temp.str();
+		std::cout << std::setw(10) << std::setfill(' ') << std::left << temp.str();
 		//instruction
 		std::cout << s_opcodesInfo[opcode].m_mnemonic << " ";
 		//prepare for outputting instruction argument
@@ -64,8 +63,7 @@ int NESCPU::Execute(int numCycles)
 					m_pc += s_opcodesInfo[opcode].m_numBytes;
 				}
 #ifdef UNIT_TESTING
-				temp << "$";
-				PrintBytes(temp, m_pc, 4);
+				temp << "$" << setdataprint(4) << m_pc;
 				std::cout << temp.str();
 #endif
 				break;
@@ -76,17 +74,15 @@ int NESCPU::Execute(int numCycles)
 			case JMP_ABSOLUTE:
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
-				temp << "$";
-				PrintBytes(temp, m_pc, 4);
+				temp << "$" << setdataprint(4) << m_pc;
 				std::cout << temp.str();
 #endif
 				break;
 			case JSR:
-				Push(m_pc);
+				PushWord(m_pc);
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
-				temp << "$";
-				PrintBytes(temp, m_pc, 4);
+				temp << "$" << setdataprint(4) << m_pc;
 				std::cout << temp.str();
 #endif
 				break;
@@ -96,8 +92,7 @@ int NESCPU::Execute(int numCycles)
 				m_p[ZERO] = m_x == 0;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 #ifdef UNIT_TESTING
-				temp << "#$";
-				PrintBytes(temp, m_x, 2);
+				temp << "#$" << setdataprint(2) << m_x;
 				std::cout << temp.str();
 #endif
 				break;
@@ -117,11 +112,8 @@ int NESCPU::Execute(int numCycles)
 			case STX_ZEROPAGE:
 #ifdef UNIT_TESTING
 				{
-					temp << "$";
-					uint8_t arg = ReadMem(m_pc+1);
-					PrintBytes(temp, arg, 2);
-					temp << " = ";
-					PrintBytes(temp, ReadMem(arg), 2);
+					unsigned arg = ReadMem(m_pc+1);
+					temp << "$" << setdataprint(2) << arg << " = " << setdataprint(2) << ReadMem(arg);
 					std::cout << temp.str();
 				}
 #endif
@@ -152,25 +144,15 @@ std::string NESCPU::DumpRegisters()
 {
 	static std::ostringstream temp;
 	temp.str("");
-	//~ temp << "A:" << setdataprint(2) << m_a
-		//~ << " X:" << setdataprint(2) << m_x
-		//~ << " Y:" << setdataprint(2) << m_y
-		//~ << " P:" << setdataprint(2) << m_p.to_ulong()
-		//~ << " SP:" << setdataprint(2) << m_sp;
-	temp << "A:";
-	PrintBytes(temp, m_a, 2);
-	temp << " X:";
-	PrintBytes(temp, m_x, 2);
-	temp << " Y:";
-	PrintBytes(temp, m_y, 2);
-	temp << " P:";
-	PrintBytes(temp, m_p.to_ulong(), 2);
-	temp << " SP:";
-	PrintBytes(temp, m_sp, 2);
+	temp << "A:" << setdataprint(2) << m_a
+		<< " X:" << setdataprint(2) << m_x
+		<< " Y:" << setdataprint(2) << m_y
+		<< " P:" << setdataprint(2) << m_p.to_ulong()
+		<< " SP:" << setdataprint(2) << m_sp;
 	return temp.str();
 }
 
-uint8_t NESCPU::ReadMem(uint16_t address)
+unsigned NESCPU::ReadMem(unsigned address)
 {
 	if(address < 0x2000)
 	{
@@ -197,23 +179,17 @@ void NESCPU::PowerUp()
 	m_y = 0;
 }
 
-void NESCPU::PrintBytes(std::ostream& stream, unsigned bytes, unsigned dataWidth)
-{
-	stream << std::hex << std::uppercase << std::setw(dataWidth) << std::right << std::setfill('0')
-		<< bytes << std::setfill(' ');
-}
-
-void NESCPU::Push(uint8_t data)
+void NESCPU::PushByte(unsigned data)
 {
 	WriteMem(m_sp, data);
 	--m_sp;
 }
 
-void NESCPU::Push(uint16_t data)
+void NESCPU::PushWord(unsigned data)
 {
 	//push high byte first, then low byte
-	Push(static_cast<uint8_t>((data >> 8) & 0xFF));
-	Push(static_cast<uint8_t>(data & 0xFF));	
+	PushByte((data >> 8) & 0xFF);
+	PushByte(data & 0xFF);	
 }
 
 void NESCPU::Reset()
@@ -229,11 +205,11 @@ void NESCPU::SetRomPtr(const uint8_t* rom)
 	m_rom = rom;
 }
 
-void NESCPU::WriteMem(uint16_t address, uint8_t data)
+void NESCPU::WriteMem(unsigned address, unsigned data)
 {
 	if(address < 0x2000)
 	{
 		//RAM write, wrap around to simulate mirroring
-		m_ram[address % RAM_SIZE] = data;
+		m_ram[address % RAM_SIZE] = static_cast<uint8_t>(data & 0xFF);
 	}	
 }
