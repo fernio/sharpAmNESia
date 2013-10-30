@@ -51,6 +51,8 @@ public:
 private:
 #endif
 	std::string DumpRegisters();
+	unsigned PopByte();
+	unsigned PopWord();
 	void PushByte(unsigned data);
 	void PushWord(unsigned data);
 	unsigned ReadMem(unsigned address);

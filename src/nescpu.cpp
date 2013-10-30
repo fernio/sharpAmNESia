@@ -63,8 +63,20 @@ int NESCPU::Execute(int numCycles)
 					m_pc += s_opcodesInfo[opcode].m_numBytes;
 				}
 				break;
+			case BMI:
+				executedCycles += BranchOnCondition(m_p[NEGATIVE] == 1, opcode);
+				break;
 			case BNE:
 				executedCycles += BranchOnCondition(m_p[ZERO] == 0, opcode);
+				break;
+			case BPL:
+				executedCycles += BranchOnCondition(m_p[NEGATIVE] == 0, opcode);
+				break;
+			case BVC:
+				executedCycles += BranchOnCondition(m_p[OVERFLOW] == 0, opcode);
+				break;
+			case BVS:
+				executedCycles += BranchOnCondition(m_p[OVERFLOW] == 1, opcode);
 				break;
 			case CLC:
 #ifdef UNIT_TESTING
@@ -85,7 +97,7 @@ int NESCPU::Execute(int numCycles)
 #endif
 				break;
 			case JSR:
-				PushWord(m_pc);
+				PushWord(m_pc+2);
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
 				temp << "$" << setdataprint(4) << m_pc;
@@ -112,11 +124,25 @@ int NESCPU::Execute(int numCycles)
 #endif
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
+			case RTS:
+#ifdef UNIT_TESTING
+				std::cout << " ";
+#endif
+				m_pc = PopWord();
+				++m_pc;
+				break;
 			case SEC:
 #ifdef UNIT_TESTING
 				std::cout << " ";
 #endif
 				m_p[CARRY] = true;
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
+			case SEI:
+#ifdef UNIT_TESTING
+				std::cout << " ";
+#endif
+				m_p[INTERRUPT_DISABLE] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case STA_ZEROPAGE:
@@ -226,6 +252,18 @@ unsigned NESCPU::ReadMem(unsigned address)
 	}
 	//TODO complete other adress ranges
 	return 0;
+}
+
+unsigned NESCPU::PopByte()
+{
+	++m_sp;
+	return ReadMem(m_sp);
+}
+
+unsigned NESCPU::PopWord()
+{
+	unsigned lowByte = PopByte();
+	return (PopByte() << 8) + lowByte;
 }
 
 void NESCPU::PowerUp()
