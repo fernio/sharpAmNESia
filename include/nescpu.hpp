@@ -72,6 +72,12 @@ private:
 	///@param conditionResult Result of condition tested by emulated kind of branch
 	///@returns Number of extra cycles run due to branching
 	unsigned BranchOnCondition(bool conditionResult, unsigned opcode);
+
+	///@brief Compare register and memory values, and update status register with result
+	///@param reg Value of register being compared
+	///@param mem Value from memory begin compared
+	void Compare(unsigned reg, unsigned mem);
+
 	void LoadRegister(unsigned& reg, unsigned address, unsigned opcode);
 	//void Jump(
 };

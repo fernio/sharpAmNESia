@@ -7,6 +7,7 @@
 #include "opcodesInfo.hpp"	
 
 #define ROM_BASE_ADDRESS 0x8000
+#define STACK_BASE_ADDRESS 0x100
 #define PIXELS_PER_CYCLE 3		//only on NTSC
 
 NESCPU::NESCPU() : m_rom(nullptr)
@@ -40,6 +41,17 @@ int NESCPU::Execute(int numCycles)
 #endif 
 		switch(opcode)
 		{
+			case AND_IMMEDIATE:
+				{
+					unsigned arg = ReadMem(m_pc+1);
+#ifdef UNIT_TESTING
+					temp << "#$" << setdataprint(2) << arg;
+					std::cout << temp.str();
+#endif
+					m_a &= arg;
+					m_pc += s_opcodesInfo[opcode].m_numBytes;
+				}
+				break;
 			case BCC:
 				executedCycles += BranchOnCondition(m_p[CARRY] == 0, opcode);
 				break;
@@ -85,10 +97,21 @@ int NESCPU::Execute(int numCycles)
 				m_p[CARRY] = 0;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
-			// case CLD:
-				// m_p[DECIMAL_MODE] = 0;
-				// m_pc += s_opcodesInfo[opcode].m_numBytes;
-				// break;
+			case CLD:
+#ifdef UNIT_TESTING
+				std::cout << "";
+#endif
+				m_p[DECIMAL_MODE] = false;
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
+			case CMP_IMMEDIATE:
+#ifdef UNIT_TESTING
+				temp << "#$" << setdataprint(2) << ReadMem(m_pc+1);
+				std::cout << temp.str();
+#endif
+				Compare(m_a, ReadMem(m_pc+1));
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
 			case JMP_ABSOLUTE:
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
@@ -124,6 +147,38 @@ int NESCPU::Execute(int numCycles)
 #endif
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
+			case PHA:
+#ifdef UNIT_TESTING
+				std::cout << "";
+#endif
+				PushByte(m_a);
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
+			case PHP:
+#ifdef UNIT_TESTING
+				std::cout << " ";
+#endif
+				//according to nesdev wiki, this instruction will set bits 4 and 5 in the stack copy
+				PushByte(m_p.to_ulong() | (1<<5) | (1<<4));
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
+			case PLA:
+#ifdef UNIT_TESTING
+				std::cout << " ";
+#endif
+				m_a = PopByte();
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
+			case PLP:
+#ifdef UNIT_TESTING
+				std::cout << "";
+#endif
+				//since bitset doesn't support assignment of all bits, do bitwise operations
+				m_p.set();
+				m_p[5] = false;
+				m_p &= PopByte();
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
 			case RTS:
 #ifdef UNIT_TESTING
 				std::cout << " ";
@@ -136,6 +191,13 @@ int NESCPU::Execute(int numCycles)
 				std::cout << " ";
 #endif
 				m_p[CARRY] = true;
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
+			case SED:
+#ifdef UNIT_TESTING
+				std::cout << " ";
+#endif
+				m_p[DECIMAL_MODE] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SEI:
@@ -218,6 +280,15 @@ unsigned NESCPU::BranchOnCondition(bool conditionResult, unsigned opcode)
 	return executedCycles;
 }
 
+void NESCPU::Compare(unsigned reg, unsigned mem)
+{
+	//flags updated as described in http://www.6502.org/tutorials/compare_beyond.html
+	m_p[ZERO] = reg == mem;
+	m_p[CARRY] = reg >= mem;
+	//"The N flag contains most significant bit of the of the subtraction result."
+	m_p[NEGATIVE] = ((reg-mem)&0x80) != 0;
+}
+
 std::string NESCPU::DumpRegisters()
 {
 	static std::ostringstream temp;
@@ -257,7 +328,7 @@ unsigned NESCPU::ReadMem(unsigned address)
 unsigned NESCPU::PopByte()
 {
 	++m_sp;
-	return ReadMem(m_sp);
+	return ReadMem(STACK_BASE_ADDRESS+m_sp);
 }
 
 unsigned NESCPU::PopWord()
@@ -279,7 +350,7 @@ void NESCPU::PowerUp()
 
 void NESCPU::PushByte(unsigned data)
 {
-	WriteMem(m_sp, data);
+	WriteMem(STACK_BASE_ADDRESS+m_sp, data);
 	--m_sp;
 }
 
