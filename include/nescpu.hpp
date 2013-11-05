@@ -42,14 +42,15 @@ public:
 	
 	void PowerUp();
 	void Reset();
+	bool SetLogFile(const char* logFilename);
 	void SetRomPtr(const uint8_t* rom);
 
 #ifdef UNIT_TESTING
-//allow unit tests to modify internal state of class
-public:
-#else
-private:
+	//allow unit test to change internal state
+	void SetPC(unsigned pc) { m_pc = pc; }
 #endif
+
+private:
 	std::string DumpRegisters();
 	unsigned PopByte();
 	unsigned PopWord();

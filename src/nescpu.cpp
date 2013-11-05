@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -9,6 +10,11 @@
 #define ROM_BASE_ADDRESS 0x8000
 #define STACK_BASE_ADDRESS 0x100
 #define PIXELS_PER_CYCLE 3		//only on NTSC
+#define PIXELS_PER_SCANLINE 341
+
+#ifdef UNIT_TESTING
+	std::ofstream s_logFile;
+#endif
 
 NESCPU::NESCPU() : m_rom(nullptr)
 {
@@ -24,7 +30,7 @@ int NESCPU::Execute(int numCycles)
 		int startingCycles = executedCycles;
 		const std::string regs(DumpRegisters());
 		//program counter
-		std::cout << setdataprint(4) << m_pc << "  ";
+		s_logFile << setdataprint(4) << m_pc << "  ";
 		//bytes read
 		static std::ostringstream temp;
 		temp.str("");
@@ -32,12 +38,12 @@ int NESCPU::Execute(int numCycles)
 		{
 			temp << setdataprint(2) << ReadMem(m_pc+i) << " ";
 		}
-		std::cout << std::setw(10) << std::setfill(' ') << std::left << temp.str();
+		s_logFile << std::setw(10) << std::setfill(' ') << std::left << temp.str();
 		//instruction
-		std::cout << s_opcodesInfo[opcode].m_mnemonic << " ";
+		s_logFile << s_opcodesInfo[opcode].m_mnemonic << " ";
 		//prepare for outputting instruction argument
 		temp.str("");
-		std::cout << std::setw(28) << std::left;
+		s_logFile << std::setw(28) << std::left;
 #endif 
 		switch(opcode)
 		{
@@ -46,7 +52,7 @@ int NESCPU::Execute(int numCycles)
 					unsigned arg = ReadMem(m_pc+1);
 #ifdef UNIT_TESTING
 					temp << "#$" << setdataprint(2) << arg;
-					std::cout << temp.str();
+					s_logFile << temp.str();
 #endif
 					m_a &= arg;
 					m_pc += s_opcodesInfo[opcode].m_numBytes;
@@ -66,7 +72,7 @@ int NESCPU::Execute(int numCycles)
 					unsigned arg = ReadMem(m_pc+1);
 #ifdef UNIT_TESTING
 					temp << "$" << setdataprint(2) << arg << " = " << setdataprint(2) << ReadMem(arg);
-					std::cout << temp.str();
+					s_logFile << temp.str();
 #endif
 					unsigned data = ReadMem(arg);
 					m_p[ZERO] = (data & m_a) == 0;
@@ -92,14 +98,14 @@ int NESCPU::Execute(int numCycles)
 				break;
 			case CLC:
 #ifdef UNIT_TESTING
-				std::cout << "";
+				s_logFile << "";
 #endif
 				m_p[CARRY] = 0;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case CLD:
 #ifdef UNIT_TESTING
-				std::cout << "";
+				s_logFile << "";
 #endif
 				m_p[DECIMAL_MODE] = false;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
@@ -107,7 +113,7 @@ int NESCPU::Execute(int numCycles)
 			case CMP_IMMEDIATE:
 #ifdef UNIT_TESTING
 				temp << "#$" << setdataprint(2) << ReadMem(m_pc+1);
-				std::cout << temp.str();
+				s_logFile << temp.str();
 #endif
 				Compare(m_a, ReadMem(m_pc+1));
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
@@ -116,7 +122,7 @@ int NESCPU::Execute(int numCycles)
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
 				temp << "$" << setdataprint(4) << m_pc;
-				std::cout << temp.str();
+				s_logFile << temp.str();
 #endif
 				break;
 			case JSR:
@@ -124,39 +130,39 @@ int NESCPU::Execute(int numCycles)
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
 				temp << "$" << setdataprint(4) << m_pc;
-				std::cout << temp.str();
+				s_logFile << temp.str();
 #endif
 				break;
 			case LDA_IMMEDIATE:
 #ifdef UNIT_TESTING
 				temp << "#$" << setdataprint(2) << ReadMem(m_pc+1);
-				std::cout << temp.str();
+				s_logFile << temp.str();
 #endif
 				LoadRegister(m_a, m_pc+1, opcode);
 				break;
 			case LDX_IMMEDIATE:
 #ifdef UNIT_TESTING
 				temp << "#$" << setdataprint(2) << ReadMem(m_pc+1);
-				std::cout << temp.str();
+				s_logFile << temp.str();
 #endif
 				LoadRegister(m_x, m_pc+1, opcode);
 				break;
 			case NOP:
 #ifdef UNIT_TESTING
-				std::cout << " ";
+				s_logFile << " ";
 #endif
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PHA:
 #ifdef UNIT_TESTING
-				std::cout << "";
+				s_logFile << "";
 #endif
 				PushByte(m_a);
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PHP:
 #ifdef UNIT_TESTING
-				std::cout << " ";
+				s_logFile << " ";
 #endif
 				//according to nesdev wiki, this instruction will set bits 4 and 5 in the stack copy
 				PushByte(m_p.to_ulong() | (1<<5) | (1<<4));
@@ -164,14 +170,14 @@ int NESCPU::Execute(int numCycles)
 				break;
 			case PLA:
 #ifdef UNIT_TESTING
-				std::cout << " ";
+				s_logFile << " ";
 #endif
 				m_a = PopByte();
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PLP:
 #ifdef UNIT_TESTING
-				std::cout << "";
+				s_logFile << "";
 #endif
 				//since bitset doesn't support assignment of all bits, do bitwise operations
 				m_p.set();
@@ -181,28 +187,28 @@ int NESCPU::Execute(int numCycles)
 				break;
 			case RTS:
 #ifdef UNIT_TESTING
-				std::cout << " ";
+				s_logFile << "";
 #endif
 				m_pc = PopWord();
 				++m_pc;
 				break;
 			case SEC:
 #ifdef UNIT_TESTING
-				std::cout << " ";
+				s_logFile << "";
 #endif
 				m_p[CARRY] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SED:
 #ifdef UNIT_TESTING
-				std::cout << " ";
+				s_logFile << "";
 #endif
 				m_p[DECIMAL_MODE] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SEI:
 #ifdef UNIT_TESTING
-				std::cout << " ";
+				s_logFile << "";
 #endif
 				m_p[INTERRUPT_DISABLE] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
@@ -212,7 +218,7 @@ int NESCPU::Execute(int numCycles)
 				{
 					unsigned arg = ReadMem(m_pc+1);
 					temp << "$" << setdataprint(2) << arg << " = " << setdataprint(2) << ReadMem(arg);
-					std::cout << temp.str();
+					s_logFile << temp.str();
 				}
 #endif
 				WriteMem(ReadMem(m_pc+1), m_a);
@@ -223,7 +229,7 @@ int NESCPU::Execute(int numCycles)
 				{
 					unsigned arg = ReadMem(m_pc+1);
 					temp << "$" << setdataprint(2) << arg << " = " << setdataprint(2) << ReadMem(arg);
-					std::cout << temp.str();
+					s_logFile << temp.str();
 				}
 #endif
 				WriteMem(ReadMem(m_pc+1), m_x);
@@ -235,7 +241,7 @@ int NESCPU::Execute(int numCycles)
 				// break;
 			default:
 #ifdef UNIT_TESTING
-				std::cout << "";
+				s_logFile << "";
 				numCycles = 0;
 #else
 				std::cerr << "unknown opcode " << std::showbase << std::hex
@@ -245,8 +251,9 @@ int NESCPU::Execute(int numCycles)
 		}
 		executedCycles += s_opcodesInfo[opcode].m_numCycles;
 #ifdef UNIT_TESTING		
-		std::cout << regs << std::dec << " CYC:" << startingCycles*PIXELS_PER_CYCLE
-				<< " SL:" << 0 //TODO: scanline counter
+		s_logFile << regs << " CYC:"
+				<< std::dec << std::setw(3) << std::right << (startingCycles*PIXELS_PER_CYCLE)%PIXELS_PER_SCANLINE
+				<< " SL:" << startingCycles*PIXELS_PER_CYCLE/PIXELS_PER_SCANLINE+241
 				<< "\n";
 #endif
 	}
@@ -258,7 +265,7 @@ unsigned NESCPU::BranchOnCondition(bool conditionResult, unsigned opcode)
 #ifdef UNIT_TESTING
 	std::ostringstream temp("");
 	temp << "$" << setdataprint(4) << m_pc + ReadMem(m_pc+1) + s_opcodesInfo[opcode].m_numBytes;
-	std::cout << temp.str();
+	s_logFile << temp.str();
 #endif
 	unsigned executedCycles = 0;
 	if(conditionResult)
@@ -323,6 +330,16 @@ unsigned NESCPU::ReadMem(unsigned address)
 	}
 	//TODO complete other adress ranges
 	return 0;
+}
+
+bool NESCPU::SetLogFile(const char* logFilename)
+{
+#ifdef UNIT_TESTING
+	s_logFile.open(logFilename, std::ios::out | std::ios::trunc);
+	return s_logFile.is_open() && s_logFile.good();
+#else
+	return false;
+#endif
 }
 
 unsigned NESCPU::PopByte()
