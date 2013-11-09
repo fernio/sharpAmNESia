@@ -908,7 +908,7 @@ the 6510 (the C64 processor).
   PLA                 PLA Pull accumulator from stack                   PLA
 
   Operation:  A fromS                                   N Z C I D V
-                                                        _ _ _ _ _ _
+                                                        / / _ _ _ _
                                  (Ref: 8.6)
   +----------------+-----------------------+---------+---------+----------+
   | Addressing Mode| Assembly Language Form| OP CODE |No. Bytes|No. Cycles|
