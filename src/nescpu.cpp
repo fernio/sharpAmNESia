@@ -76,7 +76,7 @@ int NESCPU::Execute(int numCycles)
 #endif
 					unsigned data = ReadMem(arg);
 					m_p[ZERO] = (data & m_a) == 0;
-					m_p[NEGATIVE] = (data >> 7) & 1;
+					m_p[NEGATIVE] = IsNegative(data);
 					m_p[OVERFLOW] = (data >> 6) & 1;
 					m_pc += s_opcodesInfo[opcode].m_numBytes;
 				}
@@ -173,16 +173,21 @@ int NESCPU::Execute(int numCycles)
 				s_logFile << " ";
 #endif
 				m_a = PopByte();
+				m_p[NEGATIVE] = IsNegative(m_a);
+				m_p[ZERO] = m_a == 0; 
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PLP:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
-				//since bitset doesn't support assignment of all bits, do bitwise operations
-				m_p.set();
-				m_p[5] = false;
-				m_p &= PopByte();
+				//PLP doesn't touch bits 4 and 5
+				{
+					unsigned oldP = m_p.to_ulong();
+					//since bitset doesn't support assignment of all bits, do bitwise operations
+					m_p.set();
+					m_p &= (PopByte() & 0xCF) | (oldP & 0x30);					
+				}
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case RTS:
@@ -292,8 +297,7 @@ void NESCPU::Compare(unsigned reg, unsigned mem)
 	//flags updated as described in http://www.6502.org/tutorials/compare_beyond.html
 	m_p[ZERO] = reg == mem;
 	m_p[CARRY] = reg >= mem;
-	//"The N flag contains most significant bit of the of the subtraction result."
-	m_p[NEGATIVE] = ((reg-mem)&0x80) != 0;
+	m_p[NEGATIVE] = IsNegative(reg-mem);
 }
 
 std::string NESCPU::DumpRegisters()
@@ -308,10 +312,17 @@ std::string NESCPU::DumpRegisters()
 	return temp.str();
 }
 
+bool NESCPU::IsNegative(unsigned value)
+{
+	//From http://www.6502.org/tutorials/compare_beyond.html
+	//"The N flag contains most significant bit of the of the subtraction result."
+	return ((value >> 7) & 1) != 0;
+}
+
 void NESCPU::LoadRegister(unsigned& reg, unsigned address, unsigned opcode)
 {
 	reg = ReadMem(address);
-	m_p[NEGATIVE] = reg > 0x7F;
+	m_p[NEGATIVE] = IsNegative(reg);
 	m_p[ZERO] = reg == 0;
 	m_pc += s_opcodesInfo[opcode].m_numBytes;	
 }

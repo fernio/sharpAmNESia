@@ -79,8 +79,13 @@ private:
 	///@param mem Value from memory begin compared
 	void Compare(unsigned reg, unsigned mem);
 
+	///@brief Checks if the argument is negative if interpreted as an 8 bit integer
+	///@param value
+	///@returns True if value is a negative 8 bit integer
+	bool IsNegative(unsigned value);
+
 	void LoadRegister(unsigned& reg, unsigned address, unsigned opcode);
-	//void Jump(
+	
 };
 
 #endif	//NESCPU_HPP
