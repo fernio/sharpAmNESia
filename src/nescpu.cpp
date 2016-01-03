@@ -59,13 +59,13 @@ int NESCPU::Execute(int numCycles)
 				}
 				break;
 			case BCC:
-				executedCycles += BranchOnCondition(m_p[CARRY] == 0, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_CARRY] == 0, opcode);
 				break;
 			case BCS:
-				executedCycles += BranchOnCondition(m_p[CARRY] == 1, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_CARRY] == 1, opcode);
 				break;
 			case BEQ:
-				executedCycles += BranchOnCondition(m_p[ZERO] == 1, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_ZERO] == 1, opcode);
 				break;
 			case BIT_ZEROPAGE:
 				{
@@ -75,39 +75,39 @@ int NESCPU::Execute(int numCycles)
 					s_logFile << temp.str();
 #endif
 					unsigned data = ReadMem(arg);
-					m_p[ZERO] = (data & m_a) == 0;
-					m_p[NEGATIVE] = IsNegative(data);
-					m_p[OVERFLOW] = (data >> 6) & 1;
+					m_p[SF_ZERO] = (data & m_a) == 0;
+					m_p[SF_NEGATIVE] = IsNegative(data);
+					m_p[SF_OVERFLOW] = (data >> 6) & 1;
 					m_pc += s_opcodesInfo[opcode].m_numBytes;
 				}
 				break;
 			case BMI:
-				executedCycles += BranchOnCondition(m_p[NEGATIVE] == 1, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_NEGATIVE] == 1, opcode);
 				break;
 			case BNE:
-				executedCycles += BranchOnCondition(m_p[ZERO] == 0, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_ZERO] == 0, opcode);
 				break;
 			case BPL:
-				executedCycles += BranchOnCondition(m_p[NEGATIVE] == 0, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_NEGATIVE] == 0, opcode);
 				break;
 			case BVC:
-				executedCycles += BranchOnCondition(m_p[OVERFLOW] == 0, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_OVERFLOW] == 0, opcode);
 				break;
 			case BVS:
-				executedCycles += BranchOnCondition(m_p[OVERFLOW] == 1, opcode);
+				executedCycles += BranchOnCondition(m_p[SF_OVERFLOW] == 1, opcode);
 				break;
 			case CLC:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
-				m_p[CARRY] = 0;
+				m_p[SF_CARRY] = 0;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case CLD:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
-				m_p[DECIMAL_MODE] = false;
+				m_p[SF_DECIMAL_MODE] = false;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case CMP_IMMEDIATE:
@@ -173,8 +173,8 @@ int NESCPU::Execute(int numCycles)
 				s_logFile << " ";
 #endif
 				m_a = PopByte();
-				m_p[NEGATIVE] = IsNegative(m_a);
-				m_p[ZERO] = m_a == 0; 
+				m_p[SF_NEGATIVE] = IsNegative(m_a);
+				m_p[SF_ZERO] = m_a == 0; 
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PLP:
@@ -201,21 +201,21 @@ int NESCPU::Execute(int numCycles)
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
-				m_p[CARRY] = true;
+				m_p[SF_CARRY] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SED:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
-				m_p[DECIMAL_MODE] = true;
+				m_p[SF_DECIMAL_MODE] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SEI:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
-				m_p[INTERRUPT_DISABLE] = true;
+				m_p[SF_INTERRUPT_DISABLE] = true;
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case STA_ZEROPAGE:
@@ -241,7 +241,7 @@ int NESCPU::Execute(int numCycles)
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			// case SEI:
-				// m_p[INTERRUPT_DISABLE] = 1;
+				// m_p[SF_INTERRUPT_DISABLE] = 1;
 				// m_pc += s_opcodesInfo[opcode].m_numBytes;
 				// break;
 			default:
@@ -295,9 +295,9 @@ unsigned NESCPU::BranchOnCondition(bool conditionResult, unsigned opcode)
 void NESCPU::Compare(unsigned reg, unsigned mem)
 {
 	//flags updated as described in http://www.6502.org/tutorials/compare_beyond.html
-	m_p[ZERO] = reg == mem;
-	m_p[CARRY] = reg >= mem;
-	m_p[NEGATIVE] = IsNegative(reg-mem);
+	m_p[SF_ZERO] = reg == mem;
+	m_p[SF_CARRY] = reg >= mem;
+	m_p[SF_NEGATIVE] = IsNegative(reg-mem);
 }
 
 std::string NESCPU::DumpRegisters()
@@ -322,8 +322,8 @@ bool NESCPU::IsNegative(unsigned value)
 void NESCPU::LoadRegister(unsigned& reg, unsigned address, unsigned opcode)
 {
 	reg = ReadMem(address);
-	m_p[NEGATIVE] = IsNegative(reg);
-	m_p[ZERO] = reg == 0;
+	m_p[SF_NEGATIVE] = IsNegative(reg);
+	m_p[SF_ZERO] = reg == 0;
 	m_pc += s_opcodesInfo[opcode].m_numBytes;	
 }
 
@@ -391,7 +391,7 @@ void NESCPU::PushWord(unsigned data)
 
 void NESCPU::Reset()
 {
-	m_p[INTERRUPT_DISABLE] = 1;
+	m_p[SF_INTERRUPT_DISABLE] = 1;
 	m_pc = ReadMem(0xFFFC) + (ReadMem(0xFFFD)<<8);
 	//as seen on NesDev Wiki
 	m_sp -= 3;

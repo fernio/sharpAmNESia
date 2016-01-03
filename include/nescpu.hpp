@@ -4,6 +4,7 @@
 //DEBUG this will later be used by unit tests
 #define LOG_EXECUTION
 
+#include <cstdint>
 #include <cstdlib>
 #include <bitset>
 
@@ -21,12 +22,12 @@ enum AdressingMode
 */
 enum StatusFlags
 {
-	CARRY = 0,
-	ZERO = 1,
-	INTERRUPT_DISABLE = 2,
-	DECIMAL_MODE = 3,
-	OVERFLOW = 6,
-	NEGATIVE = 7
+	SF_CARRY = 0,
+	SF_ZERO = 1,
+	SF_INTERRUPT_DISABLE = 2,
+	SF_DECIMAL_MODE = 3,
+	SF_OVERFLOW = 6,
+	SF_NEGATIVE = 7
 };
 
 ///@brief This is the system's CPU
