@@ -153,6 +153,16 @@ int NESCPU::Execute(int numCycles)
 #endif
 				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
+			case ORA_IMMEDIATE:
+#ifdef UNIT_TESTING
+				temp << "#$" << setdataprint(2) << ReadMem(m_pc + 1);
+				s_logFile << temp.str();
+#endif
+				m_a |= ReadMem(m_pc + 1);
+				m_p[SF_NEGATIVE] = IsNegative(m_a);
+				m_p[SF_ZERO] = m_a == 0;
+				m_pc += s_opcodesInfo[opcode].m_numBytes;
+				break;
 			case PHA:
 #ifdef UNIT_TESTING
 				s_logFile << "";

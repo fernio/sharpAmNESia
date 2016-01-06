@@ -18,7 +18,7 @@ static OpcodeInfo s_opcodesInfo[] =
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ "PHP", 1, 3 },
-	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
+	{ "ORA", 2, 2 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },		//0A
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
