@@ -60,7 +60,7 @@ private:
 	unsigned ReadMem(unsigned address);
 	void WriteMem(unsigned address, unsigned data);
 
-	uint8_t m_ram[RAM_SIZE];
+	uint8_t m_ram[RAM_SIZE] = {0};	//initialize RAM to a known value to make it easier to unit test the cpu
 	const uint8_t* m_rom;
 	unsigned m_pc;		///< program counter register
 	unsigned m_sp;		///< stack pointer register
