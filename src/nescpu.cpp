@@ -44,7 +44,8 @@ int NESCPU::Execute(int numCycles)
 		//prepare for outputting instruction argument
 		temp.str("");
 		s_logFile << std::setw(28) << std::left;
-#endif 
+#endif
+		bool advancePC = true;
 		switch(opcode)
 		{
 			case AND_IMMEDIATE:
@@ -55,16 +56,18 @@ int NESCPU::Execute(int numCycles)
 					s_logFile << temp.str();
 #endif
 					m_a &= arg;
-					m_pc += s_opcodesInfo[opcode].m_numBytes;
 				}
 				break;
 			case BCC:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_CARRY] == 0, opcode);
 				break;
 			case BCS:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_CARRY] == 1, opcode);
 				break;
 			case BEQ:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_ZERO] == 1, opcode);
 				break;
 			case BIT_ZEROPAGE:
@@ -78,22 +81,26 @@ int NESCPU::Execute(int numCycles)
 					m_p[SF_ZERO] = (data & m_a) == 0;
 					m_p[SF_NEGATIVE] = IsNegative(data);
 					m_p[SF_OVERFLOW] = (data >> 6) & 1;
-					m_pc += s_opcodesInfo[opcode].m_numBytes;
 				}
 				break;
 			case BMI:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_NEGATIVE] == 1, opcode);
 				break;
 			case BNE:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_ZERO] == 0, opcode);
 				break;
 			case BPL:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_NEGATIVE] == 0, opcode);
 				break;
 			case BVC:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_OVERFLOW] == 0, opcode);
 				break;
 			case BVS:
+				advancePC = false;
 				executedCycles += BranchOnCondition(m_p[SF_OVERFLOW] == 1, opcode);
 				break;
 			case CLC:
@@ -101,14 +108,12 @@ int NESCPU::Execute(int numCycles)
 				s_logFile << "";
 #endif
 				m_p[SF_CARRY] = 0;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case CLD:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
 				m_p[SF_DECIMAL_MODE] = false;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case CMP_IMMEDIATE:
 #ifdef UNIT_TESTING
@@ -116,9 +121,9 @@ int NESCPU::Execute(int numCycles)
 				s_logFile << temp.str();
 #endif
 				Compare(m_a, ReadMem(m_pc+1));
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case JMP_ABSOLUTE:
+				advancePC = false;
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
 				temp << "$" << setdataprint(4) << m_pc;
@@ -126,6 +131,7 @@ int NESCPU::Execute(int numCycles)
 #endif
 				break;
 			case JSR:
+				advancePC = false;
 				PushWord(m_pc+2);
 				m_pc = ReadMem(m_pc+1) | (ReadMem(m_pc+2) << 8);
 #ifdef UNIT_TESTING
@@ -151,7 +157,6 @@ int NESCPU::Execute(int numCycles)
 #ifdef UNIT_TESTING
 				s_logFile << " ";
 #endif
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case ORA_IMMEDIATE:
 #ifdef UNIT_TESTING
@@ -161,14 +166,12 @@ int NESCPU::Execute(int numCycles)
 				m_a |= ReadMem(m_pc + 1);
 				m_p[SF_NEGATIVE] = IsNegative(m_a);
 				m_p[SF_ZERO] = m_a == 0;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PHA:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
 				PushByte(m_a);
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PHP:
 #ifdef UNIT_TESTING
@@ -176,7 +179,6 @@ int NESCPU::Execute(int numCycles)
 #endif
 				//according to nesdev wiki, this instruction will set bits 4 and 5 in the stack copy
 				PushByte(m_p.to_ulong() | (1<<5) | (1<<4));
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PLA:
 #ifdef UNIT_TESTING
@@ -185,7 +187,6 @@ int NESCPU::Execute(int numCycles)
 				m_a = PopByte();
 				m_p[SF_NEGATIVE] = IsNegative(m_a);
 				m_p[SF_ZERO] = m_a == 0; 
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case PLP:
 #ifdef UNIT_TESTING
@@ -198,9 +199,9 @@ int NESCPU::Execute(int numCycles)
 					m_p.set();
 					m_p &= (PopByte() & 0xCF) | (oldP & 0x30);					
 				}
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case RTS:
+				advancePC = false;
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
@@ -212,21 +213,18 @@ int NESCPU::Execute(int numCycles)
 				s_logFile << "";
 #endif
 				m_p[SF_CARRY] = true;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SED:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
 				m_p[SF_DECIMAL_MODE] = true;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case SEI:
 #ifdef UNIT_TESTING
 				s_logFile << "";
 #endif
 				m_p[SF_INTERRUPT_DISABLE] = true;
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case STA_ZEROPAGE:
 #ifdef UNIT_TESTING
@@ -237,7 +235,6 @@ int NESCPU::Execute(int numCycles)
 				}
 #endif
 				WriteMem(ReadMem(m_pc+1), m_a);
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			case STX_ZEROPAGE:
 #ifdef UNIT_TESTING
@@ -248,11 +245,9 @@ int NESCPU::Execute(int numCycles)
 				}
 #endif
 				WriteMem(ReadMem(m_pc+1), m_x);
-				m_pc += s_opcodesInfo[opcode].m_numBytes;
 				break;
 			// case SEI:
 				// m_p[SF_INTERRUPT_DISABLE] = 1;
-				// m_pc += s_opcodesInfo[opcode].m_numBytes;
 				// break;
 			default:
 #ifdef UNIT_TESTING
@@ -263,6 +258,10 @@ int NESCPU::Execute(int numCycles)
 					<< opcode << std::endl;
 				exit(EXIT_FAILURE);
 #endif
+		}
+		if (advancePC)
+		{
+			m_pc += s_opcodesInfo[opcode].m_numBytes;
 		}
 		executedCycles += s_opcodesInfo[opcode].m_numCycles;
 #ifdef UNIT_TESTING		
@@ -334,7 +333,6 @@ void NESCPU::LoadRegister(unsigned& reg, unsigned address, unsigned opcode)
 	reg = ReadMem(address);
 	m_p[SF_NEGATIVE] = IsNegative(reg);
 	m_p[SF_ZERO] = reg == 0;
-	m_pc += s_opcodesInfo[opcode].m_numBytes;	
 }
 
 unsigned NESCPU::ReadMem(unsigned address)
