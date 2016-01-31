@@ -56,6 +56,9 @@ int NESCPU::Execute(int numCycles)
 					s_logFile << temp.str();
 #endif
 					m_a &= arg;
+					//UpdateStatusRegister(SF_ZERO | SF_NEGATIVE);
+					m_p[SF_ZERO] = m_a == 0;
+					m_p[SF_NEGATIVE] = IsNegative(m_a);
 				}
 				break;
 			case BCC:
@@ -115,12 +118,30 @@ int NESCPU::Execute(int numCycles)
 #endif
 				m_p[SF_DECIMAL_MODE] = false;
 				break;
+			case CLV:
+#ifdef UNIT_TESTING
+				s_logFile << "";
+#endif
+				m_p[SF_OVERFLOW] = false;
+				break;
 			case CMP_IMMEDIATE:
 #ifdef UNIT_TESTING
 				temp << "#$" << setdataprint(2) << ReadMem(m_pc+1);
 				s_logFile << temp.str();
 #endif
 				Compare(m_a, ReadMem(m_pc+1));
+				break;
+			case EOR_IMMEDIATE:
+				{
+					unsigned arg = ReadMem(m_pc + 1);
+#ifdef UNIT_TESTING
+					temp << "#$" << setdataprint(2) << arg;
+					s_logFile << temp.str();
+#endif
+					m_a ^= arg;
+					m_p[SF_ZERO] = m_a == 0;
+					m_p[SF_NEGATIVE] = IsNegative(m_a);
+				}
 				break;
 			case JMP_ABSOLUTE:
 				advancePC = false;
@@ -408,6 +429,13 @@ void NESCPU::Reset()
 void NESCPU::SetRomPtr(const uint8_t* rom)
 {
 	m_rom = rom;
+}
+
+void NESCPU::UpdateStatusRegister(uint8_t mask)
+{
+	m_p[SF_ZERO] = mask & SF_ZERO ? m_a == 0 : m_p[SF_ZERO];
+	m_p[SF_NEGATIVE] = mask & SF_NEGATIVE ? IsNegative(m_a) : m_p[SF_ZERO];
+	m_p[SF_OVERFLOW] = mask & SF_OVERFLOW ? (m_a >> 6) & 1 : m_p[SF_OVERFLOW];
 }
 
 void NESCPU::WriteMem(unsigned address, unsigned data)

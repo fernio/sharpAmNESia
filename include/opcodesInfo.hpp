@@ -82,7 +82,7 @@ static OpcodeInfo s_opcodesInfo[] =
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ "PHA", 1, 3 },
-	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
+	{ "EOR", 2, 2 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },		//4A
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ "JMP", 3, 3 },
@@ -193,7 +193,7 @@ static OpcodeInfo s_opcodesInfo[] =
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
-	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
+	{ "CLV", 1, 2 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },		//BA
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
