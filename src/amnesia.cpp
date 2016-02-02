@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 	if(commandLine.size() < 2)
 	{
 		std::cerr << "rom parameter missing" << std::endl;
-		return -1;
+		return EXIT_FAILURE;
 	}
 	NesSystem nes;
 	if(nes.LoadRom(commandLine[1].c_str()))
@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		return -1;
+		return EXIT_FAILURE;
 	}
-	return 0;
+	return EXIT_SUCCESS;
 }
