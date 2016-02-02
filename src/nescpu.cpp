@@ -435,7 +435,7 @@ void NESCPU::UpdateStatusRegister(uint8_t mask)
 {
 	m_p[SF_ZERO] = mask & SF_ZERO ? m_a == 0 : m_p[SF_ZERO];
 	m_p[SF_NEGATIVE] = mask & SF_NEGATIVE ? IsNegative(m_a) : m_p[SF_ZERO];
-	m_p[SF_OVERFLOW] = mask & SF_OVERFLOW ? (m_a >> 6) & 1 : m_p[SF_OVERFLOW];
+	m_p[SF_OVERFLOW] = mask & SF_OVERFLOW ? ((m_a >> 6) & 1) != 0 : m_p[SF_OVERFLOW];
 }
 
 void NESCPU::WriteMem(unsigned address, unsigned data)
