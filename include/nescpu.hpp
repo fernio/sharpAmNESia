@@ -59,7 +59,7 @@ private:
 	void PushWord(unsigned data);
 	unsigned ReadMem(unsigned address);
 	void WriteMem(unsigned address, unsigned data);
-	void UpdateStatusRegister(uint8_t mask);
+	void UpdateStatusRegister(std::bitset<8> updateMask, int result, uint8_t arg = 0);
 
 	uint8_t m_ram[RAM_SIZE] = {0};	//initialize RAM to a known value to make it easier to unit test the cpu
 	const uint8_t* m_rom;

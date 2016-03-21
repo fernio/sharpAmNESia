@@ -56,13 +56,8 @@ int NESCPU::Execute(int numCycles)
 					s_logFile << temp.str();
 #endif
 					int sum = m_a + arg + m_p[SF_CARRY];
-					m_p[SF_ZERO] = sum == 0 ? 1 : 0;
-					m_p[SF_NEGATIVE] = sum > 0x7F ? 1 : 0;
-					m_p[SF_CARRY] = sum > 0xFF ? 1 : 0;
-					//overflow computation based on Stackoverflow answer http://stackoverflow.com/a/29224684/141586
-					// The overflow flag is set when the sign of the addends is the same and
-					// differs from the sign of the sum
-					m_p[SF_OVERFLOW] = ((m_a & 0x80) == (arg & 0x80)) && ((m_a & 0x80) != (sum & 0x80)) ? 1 : 0;
+					std::bitset<8> updateMask(1 << SF_ZERO | 1 << SF_NEGATIVE | 1 << SF_CARRY | 1 << SF_OVERFLOW);
+					UpdateStatusRegister(updateMask, sum, arg);
 					m_a = sum & 0xFF;
 				}
 				break;
@@ -74,9 +69,8 @@ int NESCPU::Execute(int numCycles)
 					s_logFile << temp.str();
 #endif
 					m_a &= arg;
-					//UpdateStatusRegister(SF_ZERO | SF_NEGATIVE);
-					m_p[SF_ZERO] = m_a == 0;
-					m_p[SF_NEGATIVE] = IsNegative(m_a);
+					std::bitset<8> updateMask(1 << SF_ZERO | 1 << SF_NEGATIVE);
+					UpdateStatusRegister(updateMask, m_a);
 				}
 				break;
 			case BCC:
@@ -99,6 +93,7 @@ int NESCPU::Execute(int numCycles)
 					s_logFile << temp.str();
 #endif
 					unsigned data = ReadMem(arg);
+					//this instructions affects status register differently than others
 					m_p[SF_ZERO] = (data & m_a) == 0;
 					m_p[SF_NEGATIVE] = IsNegative(data);
 					m_p[SF_OVERFLOW] = (data >> 6) & 1;
@@ -157,8 +152,8 @@ int NESCPU::Execute(int numCycles)
 					s_logFile << temp.str();
 #endif
 					m_a ^= arg;
-					m_p[SF_ZERO] = m_a == 0;
-					m_p[SF_NEGATIVE] = IsNegative(m_a);
+					std::bitset<8> updateMask(1 << SF_ZERO | 1 << SF_NEGATIVE);
+					UpdateStatusRegister(updateMask, m_a);
 				}
 				break;
 			case JMP_ABSOLUTE:
@@ -198,14 +193,16 @@ int NESCPU::Execute(int numCycles)
 #endif
 				break;
 			case ORA_IMMEDIATE:
+			{
 #ifdef UNIT_TESTING
 				temp << "#$" << setdataprint(2) << ReadMem(m_pc + 1);
 				s_logFile << temp.str();
 #endif
 				m_a |= ReadMem(m_pc + 1);
-				m_p[SF_NEGATIVE] = IsNegative(m_a);
-				m_p[SF_ZERO] = m_a == 0;
+				std::bitset<8> updateMask(1 << SF_ZERO | 1 << SF_NEGATIVE);
+				UpdateStatusRegister(updateMask, m_a);
 				break;
+			}
 			case PHA:
 #ifdef UNIT_TESTING
 				s_logFile << "";
@@ -220,13 +217,15 @@ int NESCPU::Execute(int numCycles)
 				PushByte(m_p.to_ulong() | (1<<5) | (1<<4));
 				break;
 			case PLA:
+			{
 #ifdef UNIT_TESTING
 				s_logFile << " ";
 #endif
 				m_a = PopByte();
-				m_p[SF_NEGATIVE] = IsNegative(m_a);
-				m_p[SF_ZERO] = m_a == 0; 
+				std::bitset<8> updateMask(1 << SF_ZERO | 1 << SF_NEGATIVE);
+				UpdateStatusRegister(updateMask, m_a);
 				break;
+			}
 			case PLP:
 #ifdef UNIT_TESTING
 				s_logFile << "";
@@ -449,11 +448,27 @@ void NESCPU::SetRomPtr(const uint8_t* rom)
 	m_rom = rom;
 }
 
-void NESCPU::UpdateStatusRegister(uint8_t mask)
+void NESCPU::UpdateStatusRegister(std::bitset<8> updateMask, int result, uint8_t arg)
 {
-	m_p[SF_ZERO] = mask & SF_ZERO ? m_a == 0 : m_p[SF_ZERO];
-	m_p[SF_NEGATIVE] = mask & SF_NEGATIVE ? IsNegative(m_a) : m_p[SF_ZERO];
-	m_p[SF_OVERFLOW] = mask & SF_OVERFLOW ? ((m_a >> 6) & 1) != 0 : m_p[SF_OVERFLOW];
+	if (updateMask[SF_CARRY])
+	{
+		m_p[SF_CARRY] = result > 0xFF ? 1 : 0;
+	}
+	if (updateMask[SF_ZERO])
+	{
+		m_p[SF_ZERO] = result == 0 ? 1 : 0;
+	}
+	if (updateMask[SF_OVERFLOW])
+	{
+		//overflow computation based on Stackoverflow answer http://stackoverflow.com/a/29224684/141586
+		// The overflow flag is set when the sign of the addends is the same and
+		// differs from the sign of the sum
+		m_p[SF_OVERFLOW] = ((m_a & 0x80) == (arg & 0x80)) && ((arg & 0x80) != (result & 0x80)) ? 1 : 0;
+	}
+	if (updateMask[SF_NEGATIVE])
+	{
+		m_p[SF_NEGATIVE] = IsNegative(result) ? 1 : 0;
+	}
 }
 
 void NESCPU::WriteMem(unsigned address, unsigned data)
