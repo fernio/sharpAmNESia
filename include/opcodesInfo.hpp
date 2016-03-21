@@ -114,7 +114,7 @@ static OpcodeInfo s_opcodesInfo[] =
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ "PLA", 1, 4 },
-	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
+	{ "ADC", 2, 2 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },		//6A
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },
 	{ INVALID_OPCODE_MNEMONIC, 1, 1 },

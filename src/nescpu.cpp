@@ -48,6 +48,24 @@ int NESCPU::Execute(int numCycles)
 		bool advancePC = true;
 		switch(opcode)
 		{
+			case ADC_IMMEDIATE:
+				{
+					unsigned arg = ReadMem(m_pc + 1);
+#ifdef UNIT_TESTING
+					temp << "#$" << setdataprint(2) << arg;
+					s_logFile << temp.str();
+#endif
+					int sum = m_a + arg + m_p[SF_CARRY];
+					m_p[SF_ZERO] = sum == 0 ? 1 : 0;
+					m_p[SF_NEGATIVE] = sum > 0x7F ? 1 : 0;
+					m_p[SF_CARRY] = sum > 0xFF ? 1 : 0;
+					//overflow computation based on Stackoverflow answer http://stackoverflow.com/a/29224684/141586
+					// The overflow flag is set when the sign of the addends is the same and
+					// differs from the sign of the sum
+					m_p[SF_OVERFLOW] = ((m_a & 0x80) == (arg & 0x80)) && ((m_a & 0x80) != (sum & 0x80)) ? 1 : 0;
+					m_a = sum & 0xFF;
+				}
+				break;
 			case AND_IMMEDIATE:
 				{
 					unsigned arg = ReadMem(m_pc+1);
