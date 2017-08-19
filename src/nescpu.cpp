@@ -456,7 +456,7 @@ void NESCPU::UpdateStatusRegister(std::bitset<8> updateMask, int result, uint8_t
 	}
 	if (updateMask[SF_ZERO])
 	{
-		m_p[SF_ZERO] = result == 0 ? 1 : 0;
+		m_p[SF_ZERO] = (result & 0xFF) == 0 ? 1 : 0;
 	}
 	if (updateMask[SF_OVERFLOW])
 	{
