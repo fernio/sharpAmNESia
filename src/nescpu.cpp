@@ -144,6 +144,20 @@ int NESCPU::Execute(int numCycles)
 #endif
 				Compare(m_a, ReadMem(m_pc+1));
 				break;
+			case CPX_IMMEDIATE:
+#ifdef UNIT_TESTING
+				temp << "#$" << setdataprint(2) << ReadMem(m_pc + 1);
+				s_logFile << temp.str();
+#endif
+				Compare(m_x, ReadMem(m_pc + 1));
+				break;
+			case CPY_IMMEDIATE:
+#ifdef UNIT_TESTING
+				temp << "#$" << setdataprint(2) << ReadMem(m_pc + 1);
+				s_logFile << temp.str();
+#endif
+				Compare(m_y, ReadMem(m_pc + 1));
+				break;
 			case EOR_IMMEDIATE:
 				{
 					unsigned arg = ReadMem(m_pc + 1);
@@ -186,6 +200,13 @@ int NESCPU::Execute(int numCycles)
 				s_logFile << temp.str();
 #endif
 				LoadRegister(m_x, m_pc+1, opcode);
+				break;
+			case LDY_IMMEDIATE:
+#ifdef UNIT_TESTING
+				temp << "#$" << setdataprint(2) << ReadMem(m_pc + 1);
+				s_logFile << temp.str();
+#endif
+				LoadRegister(m_y, m_pc + 1, opcode);
 				break;
 			case NOP:
 #ifdef UNIT_TESTING
