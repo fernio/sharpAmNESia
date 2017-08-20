@@ -8,6 +8,10 @@ file(GLOB AMNESIA_HEADERS include/*)
 add_executable(amNESia ${AMNESIA_SOURCES} ${AMNESIA_HEADERS})
 set_property(TARGET amNESia PROPERTY CXX_STANDARD 11)
 set_property(TARGET amNESia PROPERTY CXX_STANDARD_REQUIRED ON)
+if(MSVC)
+	# add compiler flag to fix "exception unwind semantics" warning in VS2017
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+endif()
 
 # tell cmake to look for another CMakeLists.txt in the tests subdir
 enable_testing()
