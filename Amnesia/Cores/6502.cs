@@ -61,6 +61,15 @@ namespace Amnesia.Cores
             public ushort PC { get; set; }          //program counter
             public byte SP { get; set; } = 0xFD;     //stack pointer
             public StatusRegister P { get; } = new StatusRegister();  //status register
+
+            public void Set(byte a, byte x, byte y, byte p, byte sp)
+            {
+                A = a;
+                X = x;
+                Y = y;
+                SP = sp;
+                P.FromByte(p);
+            }
         }
 
         public class Memory
@@ -136,9 +145,25 @@ namespace Amnesia.Cores
 
         public Registers Regs { get; } = new Registers();
 
-        public static bool IsNegative(byte arg)
+        private static bool IsNegative(byte arg)
         {
             return arg >= 0x80;
+        }
+
+        /// <summary>
+        /// Check if result of operation gave a wrong result.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="operand"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        private static bool IsOverflow(byte a, byte operand, byte result)
+        {
+            //6502 turns on the overflow flag when an addition goes past the maximum or minimum
+            //signed values of an 8 bit register, which causes the result to have the wrong sign bit.
+            //This situation can be detected by comparing the sign of the operands with the sign
+            //of the result.
+            return IsNegative(a) == IsNegative(operand) && IsNegative(a) != IsNegative(result);
         }
 
         /// <summary>
@@ -148,6 +173,42 @@ namespace Amnesia.Cores
         {
             //load reset vector from ROM to PC
             Regs.PC = Mem.ReadWord(0xFFFC);
+        }
+
+        /// <summary>
+        /// Add memory to accumulator with carry
+        /// </summary>
+        /// <param name="mode">Addressing Mode</param>
+        /// <param name="arg1">First byte after opcode</param>
+        /// <param name="arg2">Second byte after opcode (optional)</param>
+        /// <returns></returns>
+        public int Adc(AddressingMode mode, byte arg1, byte arg2 = 0)
+        {
+            byte operand = 0;
+            int cycles = 2;
+            switch (mode)
+            {
+                case AddressingMode.Immediate:
+                    operand = arg1;
+                    cycles = 2;
+                    break;
+                case AddressingMode.ZeroPage:
+                    throw new NotImplementedException("ADC ZeroPage");
+                case AddressingMode.Absolute:
+                    throw new NotImplementedException("ADC Absolute");
+                case AddressingMode.Indirect:
+                    throw new NotImplementedException("ADC Indirect");
+                default:
+                    break;
+            }
+            int result = Regs.A + operand + (Regs.P.Carry ? 1 : 0);
+            Regs.P.Carry = result > 0xFF;
+            result &= 0xFF;
+            Regs.P.Overflow = IsOverflow(Regs.A, operand, (byte)result);
+            Regs.A = (byte)result;
+            Regs.P.Zero = Regs.A == 0;
+            Regs.P.Negative = IsNegative(Regs.A);
+            return cycles;
         }
 
         /// <summary>
@@ -173,6 +234,13 @@ namespace Amnesia.Cores
             }
         }
 
+        /// <summary>
+        /// JMP Jump to new location
+        /// </summary>
+        /// <param name="mode">Addressing Mode</param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <returns></returns>
         public int Jmp(AddressingMode mode, byte arg1, byte arg2)
         {
             switch (mode)
