@@ -8,14 +8,89 @@ namespace Amnesia.Cores
 {
     public class _6502
     {
-        public enum AddressingMode
+        public enum AddressingModes
         {
+            Implied,
             Accumulator,
             Immediate,
             ZeroPage,
+            ZeroPageIndexed,
             Absolute,
+            AbsoluteIndexedX,
+            AbsoluteIndexedY,
             Relative,
             Indirect,
+            IndirectPreIndexed,
+            IndirectPostIndexed,
+        }
+
+        public enum Instructions
+        {
+            Unknown,
+            Adc,
+            And,
+            Asl,
+            Bcc,
+            Bcs,
+            Beq,
+            Bit,
+            Bmi,
+            Bne,
+            Bpl,
+            Brk,
+            Bvc,
+            Bvs,
+            Clc,
+            Cld,
+            Cli,
+            Clv,
+            Cmp,
+            Cpx,
+            Cpy,
+            Dec,
+            Dex,
+            Dey,
+            Eor,
+            Inc,
+            Inx,
+            Iny,
+            Jmp,
+            Jsr,
+            Lda,
+            Ldx,
+            Ldy,
+            Lsr,
+            Nop,
+            Ora,
+            Pha,
+            Php,
+            Pla,
+            Plp,
+            Rol,
+            Ror,
+            Rti,
+            Rts,
+            Sbc,
+            Sec,
+            Sed,
+            Sei,
+            Sta,
+            Stx,
+            Sty,
+            Tax,
+            Tay,
+            Tsx,
+            Txa,
+            Txs,
+            Tya,
+        }
+
+        public class OpcodeInfo
+        {
+            public Instructions Instruction { get; set; } = Instructions.Unknown;
+            public AddressingModes AddressingMode { get; set; } = AddressingModes.Accumulator;
+            public int NumBytes { get; set; } = 0;      //includes opcode
+            public int NumCycles { get; set; } = 0;
         }
 
         public class StatusRegister
@@ -145,6 +220,70 @@ namespace Amnesia.Cores
 
         public Registers Regs { get; } = new Registers();
 
+        private static readonly OpcodeInfo[] opcodeInfos = new OpcodeInfo[byte.MaxValue];
+
+        public _6502()
+        {
+            //Adc
+            opcodeInfos[0x69] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.Immediate, NumBytes = 2, NumCycles = 2 };
+            opcodeInfos[0x65] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.ZeroPage, NumBytes = 2, NumCycles = 3 };
+            opcodeInfos[0x75] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.ZeroPageIndexed, NumBytes = 2, NumCycles = 4 };
+            opcodeInfos[0x6D] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 4 };
+            opcodeInfos[0x7D] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.AbsoluteIndexedX, NumBytes = 3, NumCycles = 4 };
+            opcodeInfos[0x79] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.AbsoluteIndexedY, NumBytes = 3, NumCycles = 4 };
+            opcodeInfos[0x61] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.IndirectPreIndexed, NumBytes = 2, NumCycles = 6 };
+            opcodeInfos[0x71] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.IndirectPostIndexed, NumBytes = 2, NumCycles = 5 };
+            //And
+            opcodeInfos[0x29] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.Immediate, NumBytes = 2, NumCycles = 2 };
+            opcodeInfos[0x25] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.ZeroPage, NumBytes = 2, NumCycles = 3 };
+            opcodeInfos[0x35] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.ZeroPageIndexed, NumBytes = 2, NumCycles = 4 };
+            opcodeInfos[0x2D] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 4 };
+            opcodeInfos[0x3D] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.AbsoluteIndexedX, NumBytes = 3, NumCycles = 4 };
+            opcodeInfos[0x39] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.AbsoluteIndexedY, NumBytes = 3, NumCycles = 4 };
+            opcodeInfos[0x21] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.IndirectPreIndexed, NumBytes = 2, NumCycles = 6 };
+            opcodeInfos[0x31] = new OpcodeInfo() { Instruction = Instructions.And, AddressingMode = AddressingModes.IndirectPostIndexed, NumBytes = 2, NumCycles = 5 };
+            //Asl
+            opcodeInfos[0x0A] = new OpcodeInfo() { Instruction = Instructions.Asl, AddressingMode = AddressingModes.Accumulator, NumBytes = 1, NumCycles = 2 };
+            opcodeInfos[0x06] = new OpcodeInfo() { Instruction = Instructions.Asl, AddressingMode = AddressingModes.ZeroPage, NumBytes = 2, NumCycles = 5 };
+            opcodeInfos[0x16] = new OpcodeInfo() { Instruction = Instructions.Asl, AddressingMode = AddressingModes.ZeroPageIndexed, NumBytes = 2, NumCycles = 6 };
+            opcodeInfos[0x0E] = new OpcodeInfo() { Instruction = Instructions.Asl, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 6 };
+            opcodeInfos[0x1E] = new OpcodeInfo() { Instruction = Instructions.Asl, AddressingMode = AddressingModes.AbsoluteIndexedX, NumBytes = 3, NumCycles = 7 };
+            //Bcc
+            opcodeInfos[0x90] = new OpcodeInfo() { Instruction = Instructions.Bcc, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Bcs
+            opcodeInfos[0xB0] = new OpcodeInfo() { Instruction = Instructions.Bcs, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Beq
+            opcodeInfos[0xF0] = new OpcodeInfo() { Instruction = Instructions.Beq, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Bit
+            opcodeInfos[0x24] = new OpcodeInfo() { Instruction = Instructions.Bit, AddressingMode = AddressingModes.ZeroPage, NumBytes = 2, NumCycles = 3 };
+            opcodeInfos[0x2C] = new OpcodeInfo() { Instruction = Instructions.Bit, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 4 };
+            //Bmi
+            opcodeInfos[0x30] = new OpcodeInfo() { Instruction = Instructions.Bmi, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Bne
+            opcodeInfos[0xD0] = new OpcodeInfo() { Instruction = Instructions.Bne, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Bpl
+            opcodeInfos[0x10] = new OpcodeInfo() { Instruction = Instructions.Bpl, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Brk
+            opcodeInfos[0x00] = new OpcodeInfo() { Instruction = Instructions.Brk, AddressingMode = AddressingModes.Implied, NumBytes = 1, NumCycles = 7 };
+            //Bvc
+            opcodeInfos[0x50] = new OpcodeInfo() { Instruction = Instructions.Bvc, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Bvs
+            opcodeInfos[0x70] = new OpcodeInfo() { Instruction = Instructions.Bvs, AddressingMode = AddressingModes.Relative, NumBytes = 2, NumCycles = 2 };
+            //Clc
+            opcodeInfos[0x18] = new OpcodeInfo() { Instruction = Instructions.Clc, AddressingMode = AddressingModes.Implied, NumBytes = 1, NumCycles = 2 };
+            //...
+            //Jmp
+            opcodeInfos[0x4C] = new OpcodeInfo() { Instruction = Instructions.Jmp, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 3 };
+            opcodeInfos[0x6C] = new OpcodeInfo() { Instruction = Instructions.Jmp, AddressingMode = AddressingModes.Indirect, NumBytes = 3, NumCycles = 5 };
+            //...
+            //Ldx
+            opcodeInfos[0xA2] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.Immediate, NumBytes = 2, NumCycles = 2 };
+            opcodeInfos[0xA6] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.ZeroPage, NumBytes = 2, NumCycles = 3 };
+            opcodeInfos[0xB6] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.ZeroPageIndexed, NumBytes = 2, NumCycles = 4 };
+            opcodeInfos[0xAE] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 4 };
+            opcodeInfos[0xBE] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.AbsoluteIndexedY, NumBytes = 3, NumCycles = 4 };
+        }
+
         private static bool IsNegative(byte arg)
         {
             return arg >= 0x80;
@@ -167,6 +306,16 @@ namespace Amnesia.Cores
         }
 
         /// <summary>
+        /// Return opcode information corresponding to the provided machine code
+        /// </summary>
+        /// <param name="b">Machine code</param>
+        /// <returns>Opcode information</returns>
+        public static OpcodeInfo Decode(byte b)
+        {
+            return opcodeInfos[b];
+        }
+
+        /// <summary>
         /// Reset CPU state
         /// </summary>
         public void Reset()
@@ -182,24 +331,20 @@ namespace Amnesia.Cores
         /// <param name="arg1">First byte after opcode</param>
         /// <param name="arg2">Second byte after opcode (optional)</param>
         /// <returns></returns>
-        public int Adc(AddressingMode mode, byte arg1, byte arg2 = 0)
+        public int Adc(OpcodeInfo info, byte arg1, byte arg2 = 0)
         {
             byte operand = 0;
-            int cycles = 2;
-            switch (mode)
+            switch (info.AddressingMode)
             {
-                case AddressingMode.Immediate:
+                case AddressingModes.Immediate:
                     operand = arg1;
-                    cycles = 2;
                     break;
-                case AddressingMode.ZeroPage:
-                    throw new NotImplementedException("ADC ZeroPage");
-                case AddressingMode.Absolute:
-                    throw new NotImplementedException("ADC Absolute");
-                case AddressingMode.Indirect:
-                    throw new NotImplementedException("ADC Indirect");
+                case AddressingModes.IndirectPreIndexed:
+                    byte address = (byte)((arg1 + Regs.X) & 0xFF);
+                    operand = Mem.Read(address);
+                    break;
                 default:
-                    break;
+                    throw new NotImplementedException("ADC " + info.AddressingMode);
             }
             int result = Regs.A + operand + (Regs.P.Carry ? 1 : 0);
             Regs.P.Carry = result > 0xFF;
@@ -208,7 +353,7 @@ namespace Amnesia.Cores
             Regs.A = (byte)result;
             Regs.P.Zero = Regs.A == 0;
             Regs.P.Negative = IsNegative(Regs.A);
-            return cycles;
+            return info.NumCycles;
         }
 
         /// <summary>
@@ -216,18 +361,18 @@ namespace Amnesia.Cores
         /// </summary>
         /// <param name="mode">Addressing Mode</param>
         /// <returns>Number of cycles executed</returns>
-        public int Ldx(AddressingMode mode, byte arg1, byte arg2 = 0)
+        public int Ldx(OpcodeInfo info, byte arg1, byte arg2 = 0)
         {
-            switch (mode)
+            switch (info.AddressingMode)
             {
-                case AddressingMode.Immediate:
+                case AddressingModes.Immediate:
                     Regs.X = Mem.Read(arg1);
                     Regs.P.Zero = Regs.X == 0;
                     Regs.P.Negative = IsNegative(Regs.X);
                     return 2;
-                case AddressingMode.ZeroPage:
+                case AddressingModes.ZeroPage:
                     throw new NotImplementedException("LDX ZeroPage");
-                case AddressingMode.Absolute:
+                case AddressingModes.Absolute:
                     throw new NotImplementedException("LDX Absolute");
                 default:
                     throw new ArgumentException("addressing mode not supported by opcode");
@@ -241,14 +386,14 @@ namespace Amnesia.Cores
         /// <param name="arg1"></param>
         /// <param name="arg2"></param>
         /// <returns></returns>
-        public int Jmp(AddressingMode mode, byte arg1, byte arg2)
+        public int Jmp(OpcodeInfo info, byte arg1, byte arg2)
         {
-            switch (mode)
+            switch (info.AddressingMode)
             {
-                case AddressingMode.Absolute:
+                case AddressingModes.Absolute:
                     Regs.PC = (ushort)((arg2 << 8) | arg1);
                     return 3;
-                case AddressingMode.Indirect:
+                case AddressingModes.Indirect:
                     ushort address = (ushort)((arg2 << 8) | arg1);
                     Regs.PC = Mem.ReadWord(address);
                     return 5;
@@ -262,7 +407,7 @@ namespace Amnesia.Cores
         /// </summary>
         /// <param name="mode">Addressing Mode</param>
         /// <returns>Number of cycles executed</returns>
-        public int Stx(AddressingMode mode)
+        public int Stx(OpcodeInfo info)
         {
             return 0;
         }
