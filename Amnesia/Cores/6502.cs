@@ -161,22 +161,22 @@ namespace Amnesia.Cores
                 else if (address < 0x4000)
                 {
                     //PPU registers with mirroring
-                    throw new NotImplementedException("PPU registers with mirroring");
+                    throw new NotImplementedException("PPU registers with mirroring (address: " + address.ToString("X4") + ")");
                 }
                 else if (address < 0x4018)
                 {
                     //APU and IO registers
-                    throw new NotImplementedException("APU and IO registers");
+                    throw new NotImplementedException("APU and IO registers (address: " + address.ToString("X4") + ")");
                 }
                 else if (address < 0x4020)
                 {
                     //APU and I/O functionality that is normally disabled
-                    throw new NotImplementedException("APU and I/O functionality that is normally disabled");
+                    throw new NotImplementedException("APU and I/O functionality that is normally disabled (address: " + address.ToString("X4") + ")");
                 }
                 else //0x4020 - 0xFFFF
                 {
                     //reserved for cartridge
-                    throw new NotImplementedException("ROM read not implemented");
+                    throw new NotImplementedException("ROM read not implemented (address: " + address.ToString("X4") + ")");
                 }
             }
 
@@ -305,6 +305,11 @@ namespace Amnesia.Cores
             return IsNegative(a) == IsNegative(operand) && IsNegative(a) != IsNegative(result);
         }
 
+        private static ushort ToWord(byte bl, byte bh)
+        {
+            return (ushort)((bh << 8) | bl);
+        }
+
         /// <summary>
         /// Return opcode information corresponding to the provided machine code
         /// </summary>
@@ -339,9 +344,39 @@ namespace Amnesia.Cores
                 case AddressingModes.Immediate:
                     operand = arg1;
                     break;
+                case AddressingModes.ZeroPage:
+                    operand = Mem.Read(arg1);
+                    break;
+                case AddressingModes.Absolute:
+                    operand = Mem.Read(ToWord(arg1, arg2));
+                    break;
+                case AddressingModes.AbsoluteIndexedX:
+                    {
+                        ushort address = ToWord(arg1, arg2);
+                        address += Regs.X;
+                        operand = Mem.Read(address);
+                    }
+                    break;
+                case AddressingModes.AbsoluteIndexedY:
+                    {
+                        ushort address = ToWord(arg1, arg2);
+                        address += Regs.Y;
+                        operand = Mem.Read(address);
+                    }
+                    break;
                 case AddressingModes.IndirectPreIndexed:
-                    byte address = (byte)((arg1 + Regs.X) & 0xFF);
-                    operand = Mem.Read(address);
+                    {
+                        arg1 += Regs.X;
+                        ushort address = Mem.ReadWord(arg1);
+                        operand = Mem.Read(address);
+                    }
+                    break;
+                case AddressingModes.IndirectPostIndexed:
+                    {
+                        ushort address = Mem.ReadWord(arg1);
+                        address += Regs.Y;
+                        operand = Mem.Read(address);
+                    }
                     break;
                 default:
                     throw new NotImplementedException("ADC " + info.AddressingMode);
@@ -370,12 +405,8 @@ namespace Amnesia.Cores
                     Regs.P.Zero = Regs.X == 0;
                     Regs.P.Negative = IsNegative(Regs.X);
                     return 2;
-                case AddressingModes.ZeroPage:
-                    throw new NotImplementedException("LDX ZeroPage");
-                case AddressingModes.Absolute:
-                    throw new NotImplementedException("LDX Absolute");
                 default:
-                    throw new ArgumentException("addressing mode not supported by opcode");
+                    throw new NotImplementedException("LDX " + info.AddressingMode);
             }
         }
 
@@ -391,11 +422,10 @@ namespace Amnesia.Cores
             switch (info.AddressingMode)
             {
                 case AddressingModes.Absolute:
-                    Regs.PC = (ushort)((arg2 << 8) | arg1);
+                    Regs.PC = ToWord(arg1, arg2);
                     return 3;
                 case AddressingModes.Indirect:
-                    ushort address = (ushort)((arg2 << 8) | arg1);
-                    Regs.PC = Mem.ReadWord(address);
+                    Regs.PC = Mem.ReadWord(ToWord(arg1, arg2));
                     return 5;
                 default:
                     throw new ArgumentException("addressing mode not supported by opcode");
