@@ -347,6 +347,9 @@ namespace Amnesia.Cores
                 case AddressingModes.ZeroPage:
                     operand = Mem.Read(arg1);
                     break;
+                case AddressingModes.ZeroPageIndexed:
+                    operand = Mem.Read((byte)((arg1 + Regs.X) & 0xFF));
+                    break;
                 case AddressingModes.Absolute:
                     operand = Mem.Read(ToWord(arg1, arg2));
                     break;

@@ -328,48 +328,158 @@ namespace Amnesia.Cores.Tests
             Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E049  79 00 04  ADC $0400,Y @ 0400 = 69         A: 00 X: 40 Y: 00 P: 67 SP: FB CYC:111 SL: 66
+            cpu.Regs.Set(0, 0x40, 0, 0x67, 0xFB);
+            cpu.Mem.Write(0x400, 0x69);
+            cpu.Adc(_6502.Decode(0x79), 0, 0x04);
             //A:6A X:40 Y:00 P:24 SP:FB
+            Assert.AreEqual(0x6A, cpu.Regs.A);
+            Assert.AreEqual(0x40, cpu.Regs.X);
+            Assert.AreEqual(0, cpu.Regs.Y);
+            Assert.AreEqual(0x24, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E060  79 00 04  ADC $0400,Y @ 0400 = 7F         A: 7F X: 41 Y: 00 P: 25 SP: FB CYC:192 SL: 66
+            cpu.Regs.Set(0x7F, 0x41, 0, 0x25, 0xFB);
+            cpu.Mem.Write(0x400, 0x7F);
+            cpu.Adc(_6502.Decode(0x79), 0, 0x04);
             //A:FF X:41 Y:00 P:E4 SP:FB
+            Assert.AreEqual(0xFF, cpu.Regs.A);
+            Assert.AreEqual(0x41, cpu.Regs.X);
+            Assert.AreEqual(0, cpu.Regs.Y);
+            Assert.AreEqual(0xE4, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E07A  79 00 04  ADC $0400,Y @ 0400 = 80         A: 7F X: 42 Y: 00 P: 64 SP: FB CYC:282 SL: 66
+            cpu.Regs.Set(0x7F, 0x42, 0, 0x64, 0xFB);
+            cpu.Mem.Write(0x400, 0x80);
+            cpu.Adc(_6502.Decode(0x79), 0, 0x04);
             //A:FF X:42 Y:00 P:A4 SP:FB
+            Assert.AreEqual(0xFF, cpu.Regs.A);
+            Assert.AreEqual(0x42, cpu.Regs.X);
+            Assert.AreEqual(0, cpu.Regs.Y);
+            Assert.AreEqual(0xA4, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E093  79 00 04  ADC $0400,Y @ 0400 = 80         A: 7F X: 43 Y: 00 P: 25 SP: FB CYC: 28 SL: 67
+            cpu.Regs.Set(0x7F, 0x43, 0, 0x25, 0xFB);
+            cpu.Mem.Write(0x400, 0x80);
+            cpu.Adc(_6502.Decode(0x79), 0, 0x04);
             //A:00 X:43 Y:00 P:27 SP:FB
+            Assert.AreEqual(0, cpu.Regs.A);
+            Assert.AreEqual(0x43, cpu.Regs.X);
+            Assert.AreEqual(0, cpu.Regs.Y);
+            Assert.AreEqual(0x27, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //DC8B  75 00     ADC $00,X @ 78 = 69             A: 00 X: 78 Y: 11 P: 66 SP: FB CYC: 95 SL: 74
+            cpu.Regs.Set(0, 0x78, 0x11, 0x66, 0xFB);
+            cpu.Mem.Write(0x78, 0x69);
+            cpu.Adc(_6502.Decode(0x75), 0);
             //A:69 X:78 Y:11 P:24 SP:FB
+            Assert.AreEqual(0x69, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x11, cpu.Regs.Y);
+            Assert.AreEqual(0x24, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //DC94  75 00     ADC $00,X @ 78 = 69             A: 00 X: 78 Y: 12 P: 67 SP: FB CYC:236 SL: 74
+            cpu.Regs.Set(0, 0x78, 0x12, 0x67, 0xFB);
+            cpu.Mem.Write(0x78, 0x69);
+            cpu.Adc(_6502.Decode(0x75), 0);
             //A:6A X:78 Y:12 P:24 SP:FB
+            Assert.AreEqual(0x6A, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x12, cpu.Regs.Y);
+            Assert.AreEqual(0x24, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //DCA1  75 00     ADC $00,X @ 78 = 7F             A: 7F X: 78 Y: 13 P: 25 SP: FB CYC: 48 SL: 75
+            cpu.Regs.Set(0x7F, 0x78, 0x13, 0x25, 0xFB);
+            cpu.Mem.Write(0x78, 0x7F);
+            cpu.Adc(_6502.Decode(0x75), 0);
             //A:FF X:78 Y:13 P:E4 SP:FB
+            Assert.AreEqual(0xFF, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x13, cpu.Regs.Y);
+            Assert.AreEqual(0xE4, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //DCAE  75 00     ADC $00,X @ 78 = 80             A: 7F X: 78 Y: 14 P: 64 SP: FB CYC:204 SL: 75
+            cpu.Regs.Set(0x7F, 0x78, 0x14, 0x64, 0xFB);
+            cpu.Mem.Write(0x78, 0x80);
+            cpu.Adc(_6502.Decode(0x75), 0);
             //A:FF X:78 Y:14 P:A4 SP:FB
+            Assert.AreEqual(0xFF, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x14, cpu.Regs.Y);
+            Assert.AreEqual(0xA4, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //DCB7  75 00     ADC $00,X @ 78 = 80             A: 7F X: 78 Y: 15 P: 25 SP: FB CYC:  1 SL: 76
+            cpu.Regs.Set(0x7F, 0x78, 0x15, 0x25, 0xFB);
+            cpu.Mem.Write(0x78, 0x80);
+            cpu.Adc(_6502.Decode(0x75), 0);
             //A:00 X:78 Y:15 P:27 SP:FB
+            Assert.AreEqual(0, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x15, cpu.Regs.Y);
+            Assert.AreEqual(0x27, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E265  7D 00 06  ADC $0600,X @ 0678 = 69         A: 00 X: 78 Y: 59 P: 66 SP: FB CYC:242 SL: 92
+            cpu.Regs.Set(0, 0x78, 0x59, 0x66, 0xFB);
+            cpu.Mem.Write(0x678, 0x69);
+            cpu.Adc(_6502.Decode(0x7D), 0, 0x6);
             //A:69 X:78 Y:59 P:24 SP:FB
+            Assert.AreEqual(0x69, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x59, cpu.Regs.Y);
+            Assert.AreEqual(0x24, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E26F  7D 00 06  ADC $0600,X @ 0678 = 69         A:00 X:78 Y:5A P:67 SP:FB CYC: 42 SL:93
+            cpu.Regs.Set(0, 0x78, 0x5A, 0x67, 0xFB);
+            cpu.Mem.Write(0x678, 0x69);
+            cpu.Adc(_6502.Decode(0x7D), 0, 0x6);
             //A:6A X:78 Y:5A P:24 SP:FB
+            Assert.AreEqual(0x6A, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x5A, cpu.Regs.Y);
+            Assert.AreEqual(0x24, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E27E  7D 00 06  ADC $0600,X @ 0678 = 7F         A: 7F X: 78 Y: 5B P:25 SP: FB CYC:198 SL: 93
+            cpu.Regs.Set(0x7F, 0x78, 0x5B, 0x25, 0xFB);
+            cpu.Mem.Write(0x678, 0x7F);
+            cpu.Adc(_6502.Decode(0x7D), 0, 0x6);
             //A:FF X:78 Y:5B P:E4 SP:FB
+            Assert.AreEqual(0xFF, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x5B, cpu.Regs.Y);
+            Assert.AreEqual(0xE4, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E28D  7D 00 06  ADC $0600,X @ 0678 = 80         A: 7F X: 78 Y: 5C P:64 SP: FB CYC: 16 SL: 94
+            cpu.Regs.Set(0x7F, 0x78, 0x5C, 0x64, 0xFB);
+            cpu.Mem.Write(0x678, 0x80);
+            cpu.Adc(_6502.Decode(0x7D), 0, 0x6);
             //A:FF X:78 Y:5C P:A4 SP:FB
+            Assert.AreEqual(0xFF, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x5C, cpu.Regs.Y);
+            Assert.AreEqual(0xA4, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
 
             //E297  7D 00 06  ADC $0600,X @ 0678 = 80         A: 7F X: 78 Y: 5D P: 25 SP: FB CYC:154 SL: 94
+            cpu.Regs.Set(0x7F, 0x78, 0x5D, 0x25, 0xFB);
+            cpu.Mem.Write(0x678, 0x80);
+            cpu.Adc(_6502.Decode(0x7D), 0, 0x6);
             //A:00 X:78 Y:5D P:27 SP:FB
-
-
+            Assert.AreEqual(0, cpu.Regs.A);
+            Assert.AreEqual(0x78, cpu.Regs.X);
+            Assert.AreEqual(0x5D, cpu.Regs.Y);
+            Assert.AreEqual(0x27, cpu.Regs.P.AsByte());
+            Assert.AreEqual(0xFB, cpu.Regs.SP);
         }
 
         [TestMethod()]
