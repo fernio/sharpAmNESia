@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Amnesia.Cores
 {
-    public class _6502
+    public class Ricoh2A03
     {
         public enum AddressingModes
         {
@@ -222,7 +222,7 @@ namespace Amnesia.Cores
 
         private static readonly OpcodeInfo[] opcodeInfos = new OpcodeInfo[byte.MaxValue];
 
-        public _6502()
+        public Ricoh2A03()
         {
             //Adc
             opcodeInfos[0x69] = new OpcodeInfo() { Instruction = Instructions.Adc, AddressingMode = AddressingModes.Immediate, NumBytes = 2, NumCycles = 2 };
