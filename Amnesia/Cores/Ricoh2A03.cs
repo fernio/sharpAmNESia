@@ -137,6 +137,13 @@ namespace Amnesia.Cores
             public byte SP { get; set; } = 0xFD;     //stack pointer
             public StatusRegister P { get; } = new StatusRegister();  //status register
 
+            public Registers() { }
+
+            public Registers(byte a, byte x, byte y, byte p, byte sp)
+            {
+                Set(a, x, y, p, sp);
+            }
+
             public void Set(byte a, byte x, byte y, byte p, byte sp)
             {
                 A = a;

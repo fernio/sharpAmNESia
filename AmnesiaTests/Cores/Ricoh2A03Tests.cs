@@ -9,6 +9,15 @@ namespace Amnesia.Cores.Tests
     [TestClass()]
     public class Ricoh2A03Tests
     {
+        public void AssertRegisterValues(Ricoh2A03.Registers expectedValues, Ricoh2A03.Registers actualValues)
+        {
+            Assert.AreEqual(expectedValues.A, actualValues.A);
+            Assert.AreEqual(expectedValues.X, actualValues.X);
+            Assert.AreEqual(expectedValues.Y, actualValues.Y);
+            Assert.AreEqual(expectedValues.P.AsByte(), actualValues.P.AsByte());
+            Assert.AreEqual(expectedValues.SP, actualValues.SP);
+        }
+
         [TestMethod()]
         public void InitialStateTest()
         {
@@ -512,11 +521,7 @@ namespace Amnesia.Cores.Tests
             cpu.Regs.Set(0, 0, 0, 0x24, 0xFD);
             cpu.Ldx(Ricoh2A03.Decode(0xA2), 0);
             // expected result A:00 X:00 Y:00 P:26 SP:FD
-            Assert.AreEqual(0, cpu.Regs.A);
-            Assert.AreEqual(0, cpu.Regs.X);
-            Assert.AreEqual(0, cpu.Regs.Y);
-            Assert.AreEqual(0x26, cpu.Regs.P.AsByte());
-            Assert.AreEqual(0xFD, cpu.Regs.SP);
+            AssertRegisterValues(new Ricoh2A03.Registers(0, 0, 0, 0x26, 0xFD), cpu.Regs);
         }
     }
 }
