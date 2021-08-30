@@ -411,13 +411,14 @@ namespace Amnesia.Cores
             switch (info.AddressingMode)
             {
                 case AddressingModes.Immediate:
-                    Regs.X = Mem.Read(arg1);
+                    Regs.X = arg1;
                     Regs.P.Zero = Regs.X == 0;
                     Regs.P.Negative = IsNegative(Regs.X);
-                    return 2;
+                    break;
                 default:
                     throw new NotImplementedException("LDX " + info.AddressingMode);
             }
+            return info.NumCycles;
         }
 
         /// <summary>

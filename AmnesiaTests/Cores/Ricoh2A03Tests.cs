@@ -522,6 +522,20 @@ namespace Amnesia.Cores.Tests
             cpu.Ldx(Ricoh2A03.Decode(0xA2), 0);
             // expected result A:00 X:00 Y:00 P:26 SP:FD
             AssertRegisterValues(new Ricoh2A03.Registers(0, 0, 0, 0x26, 0xFD), cpu.Regs);
+
+            //@ 0xCAB3 A2 40     LDX #$40                        A:80 X:00 Y:80 P:E5 SP:FB CYC:283 SL:248
+            cpu.Regs.Set(0x80, 0, 0x80, 0xE5, 0xFB);
+            cpu.Ldx(Ricoh2A03.Decode(0xA2), 0x40);
+            // expected result A:80 X:40 Y:80 P:65 SP:FB CYC:289 SL:248
+            AssertRegisterValues(new Ricoh2A03.Registers(0x80, 0x40, 0x80, 0x65, 0xFB), cpu.Regs);
+
+            //@ 0xCAEA  A2 80     LDX #$80                        A:80 X:40 Y:80 P:A4 SP:FB CYC: 83 SL:249
+            cpu.Regs.Set(0x80, 0x40, 0x80, 0xA4, 0xFB);
+            cpu.Ldx(Ricoh2A03.Decode(0xA2), 0x80);
+            // expected result A:80 X:80 Y:80 P:A4 SP:FB CYC: 89 SL:249
+            AssertRegisterValues(new Ricoh2A03.Registers(0x80, 0x80, 0x80, 0xA4, 0xFB), cpu.Regs);
+
+            //
         }
     }
 }
