@@ -12,3 +12,5 @@ AmnesiaTests/obj/
 
 # The packages folder can be ignored because of NuGet Package Restore
 packages/
+Backup/Amnesia.sln
+UpgradeLog.htm

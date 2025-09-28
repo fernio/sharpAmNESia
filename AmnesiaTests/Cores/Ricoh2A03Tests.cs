@@ -1,8 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Amnesia.Cores;
+﻿using Amnesia.Cores;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static Amnesia.Cores.Ricoh2A03;
 
 namespace Amnesia.Cores.Tests
 {
@@ -16,6 +17,10 @@ namespace Amnesia.Cores.Tests
             Assert.AreEqual(expectedValues.Y, actualValues.Y);
             Assert.AreEqual(expectedValues.P.AsByte(), actualValues.P.AsByte());
             Assert.AreEqual(expectedValues.SP, actualValues.SP);
+        }
+        public void AssertMemoryValue(byte expectedValue, Ricoh2A03.Memory mem, ushort address)
+        {
+            Assert.AreEqual(expectedValue, mem.Read(address));
         }
 
         [TestMethod()]
@@ -368,6 +373,29 @@ namespace Amnesia.Cores.Tests
             AssertRegisterValues(new Ricoh2A03.Registers(0x80, 0x80, 0x80, 0xA4, 0xFB), cpu.Regs);
 
             //
+        }
+
+        [TestMethod()]
+        public void StxTest()
+        {
+            var cpu = new Ricoh2A03();
+            //@ 0xC5F9  86 10     STX $10 = 00                    A:00 X:00 Y:00 P:26 SP:FD CYC: 24 SL:241
+            cpu.Regs.Set(0x00, 0x00, 0x00, 0x26, 0xFD);
+            cpu.Stx(Ricoh2A03.Decode(0x86), 0x10);
+            //expected result cpu.Mem[0x10]=X and A:00 X:00 Y:00 P:26 SP:FD CYC: 33 SL:241
+            AssertMemoryValue(cpu.Regs.X, cpu.Mem, 0x10);
+
+            //@ 0xCDAE  8E FF 07  STX $07FF = 00                  A:00 X:FB Y:99 P:A5 SP:FB CYC: 64 SL:257
+            cpu.Regs.Set(0, 0xFB, 0x99, 0xA5, 0xFB);
+            cpu.Stx(Ricoh2A03.Decode(0x8E), 0xFF, 0x07);
+            //expected result cpu.Mem[0x07FF]=X and A:00 X:FB Y:99 P:A5 SP:FB CYC: 76 SL:257
+            AssertMemoryValue(cpu.Regs.X, cpu.Mem, 0x07FF);
+
+            //@ 0xDEFE  96 80     STX $80,Y @ 7F = 00             A:47 X:69 Y:FF P:24 SP:FB CYC: 40 SL:88
+            cpu.Regs.Set(0x47, 0x69, 0xFF, 0x24, 0xFB);
+            cpu.Stx(Ricoh2A03.Decode(0x96), 0x80);
+            //expected result cpu.Mem[0xFF & (0x80+Y)]=X and A:47 X:69 Y:FF P:24 SP:FB CYC: 52 SL:88
+            AssertMemoryValue(cpu.Regs.X, cpu.Mem, (byte)(0xFF & (0x80 + cpu.Regs.Y)));
         }
     }
 }

@@ -289,6 +289,25 @@ namespace Amnesia.Cores
             opcodeInfos[0xB6] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.ZeroPageIndexed, NumBytes = 2, NumCycles = 4 };
             opcodeInfos[0xAE] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 4 };
             opcodeInfos[0xBE] = new OpcodeInfo() { Instruction = Instructions.Ldx, AddressingMode = AddressingModes.AbsoluteIndexedY, NumBytes = 3, NumCycles = 4 };
+            //...
+            //Stx
+            opcodeInfos[0x86] = new OpcodeInfo() { Instruction = Instructions.Stx, AddressingMode = AddressingModes.ZeroPage, NumBytes = 2, NumCycles = 3 };
+            opcodeInfos[0x96] = new OpcodeInfo() { Instruction = Instructions.Stx, AddressingMode = AddressingModes.ZeroPageIndexed, NumBytes = 2, NumCycles = 4 };
+            opcodeInfos[0x8E] = new OpcodeInfo() { Instruction = Instructions.Stx, AddressingMode = AddressingModes.Absolute, NumBytes = 3, NumCycles = 4 };
+        }
+
+        private static ushort ComputeAddress(AddressingModes addressingMode, Registers regs, ushort address)
+        {
+            switch(addressingMode)
+            {
+                case AddressingModes.ZeroPageIndexed:
+                    return (ushort)(0xFF & (address + regs.Y));
+                //case AddressingModes.AbsoluteIndexedX:
+                //    break;
+                //case AddressingModes.AbsoluteIndexedY:
+                //    break;
+            }
+            throw new NotImplementedException("Unhandled addressing mode " + addressingMode);
         }
 
         private static bool IsNegative(byte arg)
@@ -444,13 +463,49 @@ namespace Amnesia.Cores
         }
 
         /// <summary>
-        /// STX Store index X in memory
+        /// STA Store accumulator in memory
         /// </summary>
         /// <param name="mode">Addressing Mode</param>
         /// <returns>Number of cycles executed</returns>
-        public int Stx(OpcodeInfo info)
+        public int Sta(OpcodeInfo info, byte arg1, byte arg2 = 0)
         {
-            return 0;
+            throw new NotImplementedException("STA " + info.AddressingMode);
+        }
+
+        /// <summary>
+        /// STX Store index X in memory
+        /// </summary>
+        /// <param name="mode">Addressing Mode</param>
+        /// <param name="arg1">Low byte of address</param>
+        /// <param name="arg2">High byte of address (optional)</param>
+        /// <returns>Number of cycles executed</returns>
+        public int Stx(OpcodeInfo info, byte arg1, byte arg2 = 0)
+        {
+            switch (info.AddressingMode)
+            {
+                case AddressingModes.ZeroPage:
+                    Mem.Write(arg1, Regs.X);
+                    break;
+                case AddressingModes.ZeroPageIndexed:
+                    Mem.Write(ComputeAddress(info.AddressingMode, Regs, arg1), Regs.X);
+                    break;
+                case AddressingModes.Absolute:
+                    Mem.Write(ToWord(arg1, arg2), Regs.X);
+                    break;
+                default:
+                    throw new NotImplementedException("STX " + info.AddressingMode);
+            }
+            return info.NumCycles;
+        }
+
+        /// <summary>
+        /// STY Store index Y in memory
+        /// </summary>
+        /// <param name="mode">Addressing Mode</param>
+        /// <returns>Number of cycles executed</returns>
+        public int Sty(OpcodeInfo info, byte arg1, byte arg2 = 0)
+        {
+            throw new NotImplementedException("STY " + info.AddressingMode);
         }
     }
 }
