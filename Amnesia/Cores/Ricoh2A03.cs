@@ -336,6 +336,48 @@ namespace Amnesia.Cores
             return (ushort)((bh << 8) | bl);
         }
 
+        private byte GetOperand(AddressingModes addressingMode, byte arg1, byte arg2 = 0)
+        {
+            switch (addressingMode)
+            {
+                case AddressingModes.Immediate:
+                    return arg1;
+                case AddressingModes.ZeroPage:
+                    return Mem.Read(arg1);
+                case AddressingModes.ZeroPageIndexed:
+                    return Mem.Read((byte)((arg1 + Regs.X) & 0xFF));
+                case AddressingModes.Absolute:
+                    return Mem.Read(ToWord(arg1, arg2));
+                case AddressingModes.AbsoluteIndexedX:
+                    {
+                        ushort address = ToWord(arg1, arg2);
+                        address += Regs.X;
+                        return Mem.Read(address);
+                    }
+                case AddressingModes.AbsoluteIndexedY:
+                    {
+                        ushort address = ToWord(arg1, arg2);
+                        address += Regs.Y;
+                        return Mem.Read(address);
+                    }
+                case AddressingModes.IndirectPreIndexed:
+                    {
+                        arg1 += Regs.X;
+                        ushort address = Mem.ReadWord(arg1);
+                        return Mem.Read(address);
+                    }
+                case AddressingModes.IndirectPostIndexed:
+                    {
+                        ushort address = Mem.ReadWord(arg1);
+                        address += Regs.Y;
+                        return Mem.Read(address);
+                    }
+                default:
+                    throw new NotImplementedException("unrecognized addressing mode: " + addressingMode);
+            }
+
+        }
+
         /// <summary>
         /// Return opcode information corresponding to the provided machine code
         /// </summary>
@@ -361,60 +403,31 @@ namespace Amnesia.Cores
         /// <param name="mode">Addressing Mode</param>
         /// <param name="arg1">First byte after opcode</param>
         /// <param name="arg2">Second byte after opcode (optional)</param>
-        /// <returns></returns>
+        /// <returns>Number of executed cycles</returns>
         public int Adc(OpcodeInfo info, byte arg1, byte arg2 = 0)
         {
-            byte operand = 0;
-            switch (info.AddressingMode)
-            {
-                case AddressingModes.Immediate:
-                    operand = arg1;
-                    break;
-                case AddressingModes.ZeroPage:
-                    operand = Mem.Read(arg1);
-                    break;
-                case AddressingModes.ZeroPageIndexed:
-                    operand = Mem.Read((byte)((arg1 + Regs.X) & 0xFF));
-                    break;
-                case AddressingModes.Absolute:
-                    operand = Mem.Read(ToWord(arg1, arg2));
-                    break;
-                case AddressingModes.AbsoluteIndexedX:
-                    {
-                        ushort address = ToWord(arg1, arg2);
-                        address += Regs.X;
-                        operand = Mem.Read(address);
-                    }
-                    break;
-                case AddressingModes.AbsoluteIndexedY:
-                    {
-                        ushort address = ToWord(arg1, arg2);
-                        address += Regs.Y;
-                        operand = Mem.Read(address);
-                    }
-                    break;
-                case AddressingModes.IndirectPreIndexed:
-                    {
-                        arg1 += Regs.X;
-                        ushort address = Mem.ReadWord(arg1);
-                        operand = Mem.Read(address);
-                    }
-                    break;
-                case AddressingModes.IndirectPostIndexed:
-                    {
-                        ushort address = Mem.ReadWord(arg1);
-                        address += Regs.Y;
-                        operand = Mem.Read(address);
-                    }
-                    break;
-                default:
-                    throw new NotImplementedException("ADC " + info.AddressingMode);
-            }
+            byte operand = GetOperand(info.AddressingMode, arg1, arg2);
             int result = Regs.A + operand + (Regs.P.Carry ? 1 : 0);
             Regs.P.Carry = result > 0xFF;
             result &= 0xFF;
             Regs.P.Overflow = IsOverflow(Regs.A, operand, (byte)result);
             Regs.A = (byte)result;
+            Regs.P.Zero = Regs.A == 0;
+            Regs.P.Negative = IsNegative(Regs.A);
+            return info.NumCycles;
+        }
+
+        /// <summary>
+        /// "AND" memory with accumulator
+        /// </summary>
+        /// <param name="mode">Addressing Mode</param>
+        /// <param name="arg1">First byte after opcode</param>
+        /// <param name="arg2">Second byte after opcode (optional)</param>
+        /// <returns>Number of executed cycles</returns>
+        public int And(OpcodeInfo info, byte arg1, byte arg2 = 0)
+        {
+            byte operand = GetOperand(info.AddressingMode, arg1, arg2);
+            Regs.A &= operand;
             Regs.P.Zero = Regs.A == 0;
             Regs.P.Negative = IsNegative(Regs.A);
             return info.NumCycles;
@@ -427,16 +440,10 @@ namespace Amnesia.Cores
         /// <returns>Number of cycles executed</returns>
         public int Ldx(OpcodeInfo info, byte arg1, byte arg2 = 0)
         {
-            switch (info.AddressingMode)
-            {
-                case AddressingModes.Immediate:
-                    Regs.X = arg1;
-                    Regs.P.Zero = Regs.X == 0;
-                    Regs.P.Negative = IsNegative(Regs.X);
-                    break;
-                default:
-                    throw new NotImplementedException("LDX " + info.AddressingMode);
-            }
+            byte operand = GetOperand(info.AddressingMode, arg1, arg2);
+            Regs.X = operand;
+            Regs.P.Zero = Regs.X == 0;
+            Regs.P.Negative = IsNegative(Regs.X);
             return info.NumCycles;
         }
 
@@ -453,13 +460,14 @@ namespace Amnesia.Cores
             {
                 case AddressingModes.Absolute:
                     Regs.PC = ToWord(arg1, arg2);
-                    return 3;
+                    break;
                 case AddressingModes.Indirect:
                     Regs.PC = Mem.ReadWord(ToWord(arg1, arg2));
-                    return 5;
+                    break;
                 default:
                     throw new ArgumentException("addressing mode not supported by opcode");
             }
+            return info.NumCycles;
         }
 
         /// <summary>
