@@ -336,8 +336,8 @@ namespace Amnesia.Cores.Tests
         public void AndTest()
         {
             var cpu = new Ricoh2A03();
-            //@0xC7E9 29 EF     AND #$EF                        A:7F X:00 Y:00 P:6D SP:FB
-            cpu.Regs.Set(0x7F, 0, 0, 0x6D, 0xFB);
+            //@0xC7E9  29 EF     AND #$EF                        A:7F X:00 Y:00 P:6D SP:FB
+            cpu.Regs.Set(0x7F, 0x0, 0x0, 0x6D, 0xFB);
             cpu.And(Ricoh2A03.Decode(0x29), 0xEF);
             //expected result A:6F X:00 Y:00 P:6D SP:FB
             AssertRegisterValues(new Ricoh2A03.Registers(0x6F, 0, 0, 0x6D, 0xFB), cpu.Regs);
@@ -346,22 +346,53 @@ namespace Amnesia.Cores.Tests
             cpu.Regs.Set(0x55, 0x33, 0x80, 0x64, 0xFB);
             cpu.And(Ricoh2A03.Decode(0x25), 0x78);
             //expected result A:00 X:33 Y:80 P:66 SP:FB
-            AssertRegisterValues(new Ricoh2A03.Registers(0, 0x33, 0x80, 0x66, 0xFB), cpu.Regs);
+            AssertRegisterValues(new Ricoh2A03.Registers(0x0, 0x33, 0x80, 0x66, 0xFB), cpu.Regs);
 
             //@0xDC64  35 00     AND $00,X @ 78 = EF             A:F8 X:78 Y:0E P:A5 SP:FB
+            cpu.Regs.Set(0xF8, 0x78, 0x0E, 0xA5, 0xFB);
+            cpu.Mem.Write(address: 0x78, data: 0xEF);
+            cpu.And(Ricoh2A03.Decode(0x35), 0);
+            //expected result @0xDC66 A:E8 X:78 Y:0E P:A5 SP:FB
+            AssertRegisterValues(new Ricoh2A03.Registers(0xE8, 0x78, 0x0E, 0xA5, 0xFB), cpu.Regs);
 
-            //@0xD61D  2D 78 06  AND $0678 = AA                  A:55 X:33 Y:BA P:64 SP:FB CYC: 31 SL:37
+            //@0xD61D  2D 78 06  AND $0678 = AA                  A:55 X:33 Y:BA P:64 SP:FB
+            cpu.Regs.Set(0x55, 0x33, 0xBA, 0x64, 0xFB);
+            cpu.Mem.Write(address: 0x0678, data: 0xAA);
+            cpu.And(Ricoh2A03.Decode(0x2D), 0x78, 0x06);
+            //expected result @0xD620 A:00 X:33 Y:BA P:66 SP:FB
+            AssertRegisterValues(new Ricoh2A03.Registers(0x0, 0x33, 0xBA, 0x66, 0xFB), cpu.Regs);
 
+            //@0xE229  3D 00 06  AND $0600,X @ 0678 = AA         A:55 X:78 Y:55 P:64 SP:FB CYC:306 SL:90
+            cpu.Regs.Set(0x55, 0x78, 0x55, 0x64, 0xFB);
+            cpu.Mem.Write(address: 0x0678, data: 0xAA);
+            cpu.And(Ricoh2A03.Decode(0x3D), 0x00, 0x06);
+            //expected result @0xE22C A:00 X:78 Y:55 P:66 SP:FB CYC:318 SL:90
+            AssertRegisterValues(new Ricoh2A03.Registers(0x0, 0x78, 0x55, 0x66, 0xFB), cpu.Regs);
 
-            //@0xD065 21 80     AND($80, X) @ 80 = 0200 = AA    A:55 X:00 Y:5C P:64 SP:FB
+            //@DFD4  39 00 04  AND $0400,Y @ 0400 = AA         A:55 X:3B Y:00 P:64 SP:FB CYC: 44 SL:65
+            cpu.Regs.Set(0x55, 0x3B, 0x0, 0x64, 0xFB);
+            cpu.Mem.Write(address: 0x0400, data: 0xAA);
+            cpu.And(Ricoh2A03.Decode(0x39), 0x0, 0x04);
+            //expected result @DFD7  A:00 X:3B Y:00 P:66 SP:FB CYC: 56 SL:65
+            AssertRegisterValues(new Ricoh2A03.Registers(0x0, 0x3B, 0x0, 0x66, 0xFB), cpu.Regs);
+
+            //@0xD065  21 80     AND($80, X) @ 80 = 0200 = AA    A:55 X:00 Y:5C P:64 SP:FB
             cpu.Regs.Set(0x55, 0, 0x5C, 0x64, 0xFB);
-            cpu.Mem.Write(0x80, 0x00);
-            cpu.Mem.Write(0x81, 0x02);
-            cpu.Mem.Write(0x200, 0xAA);
+            cpu.Mem.Write(address: 0x80, data: 0x00);
+            cpu.Mem.Write(address: 0x81, data: 0x02);
+            cpu.Mem.Write(address: 0x200, data: 0xAA);
             cpu.And(Ricoh2A03.Decode(0x21), 0x80);
             //expected result A:00 X:00 Y:5C P:66 SP:FB
-            AssertRegisterValues(new Ricoh2A03.Registers(0, 0, 0x5C, 0x66, 0xFB), cpu.Regs);
+            AssertRegisterValues(new Ricoh2A03.Registers(0x0, 0x0, 0x5C, 0x66, 0xFB), cpu.Regs);
 
+            //@0xD9A5  31 33     AND ($33),Y = 0400 @ 0400 = AA  A:55 X:EF Y:00 P:64 SP:FB CYC:144 SL:57
+            cpu.Regs.Set(0x55, 0xEF, 0x0, 0x64, 0xFB);
+            cpu.Mem.Write(address: 0x33, data: 0x00);
+            cpu.Mem.Write(address: 0x34, data: 0x04);
+            cpu.Mem.Write(address: 0x400, data: 0xAA);
+            cpu.And(Ricoh2A03.Decode(0x31), 0x33);
+            //expected result @0xD9A7  A:00 X:EF Y:00 P:66 SP:FB CYC:159 SL:57
+            AssertRegisterValues(new Ricoh2A03.Registers(0x0, 0xEF, 0x0, 0x66, 0xFB), cpu.Regs);
         }
 
 
