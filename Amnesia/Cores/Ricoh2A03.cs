@@ -426,10 +426,26 @@ namespace Amnesia.Cores
         /// <returns>Number of executed cycles</returns>
         public int And(OpcodeInfo info, byte arg1, byte arg2 = 0)
         {
+            /* +----------------+-----------------------+---------+---------+----------+
+             * | Addressing Mode| Assembly Language Form| OP CODE |No. Bytes|No. Cycles|
+             * +----------------+-----------------------+---------+---------+----------+
+             * |  Immediate     |   AND #Oper           |    29   |    2    |    2     |
+             * |  Zero Page     |   AND Oper            |    25   |    2    |    3     |
+             * |  Zero Page,X   |   AND Oper,X          |    35   |    2    |    4     |
+             * |  Absolute      |   AND Oper            |    2D   |    3    |    4     |
+             * |  Absolute,X    |   AND Oper,X          |    3D   |    3    |    4*    |
+             * |  Absolute,Y    |   AND Oper,Y          |    39   |    3    |    4*    |
+             * |  (Indirect,X)  |   AND (Oper,X)        |    21   |    2    |    6     |
+             * |  (Indirect,Y)  |   AND (Oper),Y        |    31   |    2    |    5     |
+             * +----------------+-----------------------+---------+---------+----------+
+             * * Add 1 if page boundary is crossed.
+             */
+
             byte operand = GetOperand(info.AddressingMode, arg1, arg2);
             Regs.A &= operand;
             Regs.P.Zero = Regs.A == 0;
             Regs.P.Negative = IsNegative(Regs.A);
+            //TODO: Add 1 if page boundary is crossed.
             return info.NumCycles;
         }
 
